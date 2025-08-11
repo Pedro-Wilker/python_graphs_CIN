@@ -5,7 +5,7 @@ from datetime import datetime
 import calendar
 import numpy as np
 
-st.title("Análise das Produções de CIN CIDADES-BA")
+st.title("Análise das Produções de CIN Cidades Bahia")
 
 # Upload do arquivo Excel
 uploaded_file = st.file_uploader("Carregue sua planilha Excel (.xlsx)", type="xlsx")
@@ -56,7 +56,7 @@ if uploaded_file is not None:
         
         # Converter colunas de datas para datetime com formato especificado
         date_cols = ['DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.']
-        date_format = '%d/%m/%Y'  # Assumindo formato dia/mês/ano, ajuste se necessário
+        date_format = '%d/%m/%Y'  # Assumindo formato dia/mês/ano
         for col in date_cols:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], format=date_format, errors='coerce')
@@ -93,9 +93,10 @@ if uploaded_file is not None:
         if max_min_data:
             max_min_df = pd.DataFrame(max_min_data)
             fig_max_min = px.line(max_min_df, x='Mês', y='Produção', color='Tipo', 
-                                title='Produção Máxima e Mínima por Mês',
-                                hover_data=['Cidade'])
-            fig_max_min.update_traces(mode='lines+markers+text', text='%{y}', textposition='top center')
+                                  title='Produção Máxima e Mínima por Mês',
+                                  hover_data=['Cidade'])
+            fig_max_min.update_traces(mode='lines+markers', text=max_min_df['Produção'], textposition='top center')
+            fig_max_min.update_layout(showlegend=True)
             st.plotly_chart(fig_max_min)
         else:
             st.warning("Nenhum dado de produção disponível nos meses especificados.")
@@ -104,7 +105,7 @@ if uploaded_file is not None:
         total_prod = df[months].sum()
         total_prod_df = pd.DataFrame({'Mês': months, 'Produção Total': total_prod})
         fig_total = px.bar(total_prod_df, x='Mês', y='Produção Total', 
-                        title='Produção Geral por Mês')
+                           title='Produção Geral por Mês')
         fig_total.update_traces(texttemplate='%{y}', textposition='outside')
         st.plotly_chart(fig_total)
         
@@ -144,10 +145,10 @@ if uploaded_file is not None:
                             st.warning("Datas inválidas ou ausentes para a cidade selecionada.")
                     
                     # 2. Gráfico de colunas com produção mês a mês
-                    city_prod = city_df[months].sum().reset_index()
+                    city_prod = city_df[months].transpose().reset_index()
                     city_prod.columns = ['Mês', 'Produção']
                     fig_city_bar = px.bar(city_prod, x='Mês', y='Produção', 
-                                        title=f'Produção Mês a Mês - {selected_city}')
+                                          title=f'Produção Mês a Mês - {selected_city}')
                     fig_city_bar.update_traces(texttemplate='%{y}', textposition='outside')
                     st.plotly_chart(fig_city_bar)
                     
@@ -155,12 +156,13 @@ if uploaded_file is not None:
                     fig_city_line = px.line(city_prod, x='Mês', y='Produção', 
                                             title=f'Produção Mensal (Linha) - {selected_city}',
                                             markers=True)
-                    fig_city_line.update_traces(mode='lines+markers+text', text='%{y}', textposition='top center')
+                    fig_city_line.update_traces(mode='lines+markers', text=city_prod['Produção'], textposition='top center')
+                    fig_city_line.update_layout(showlegend=True)
                     st.plotly_chart(fig_city_line)
                     
                     # 4. Média de produção diária de cada mês - Gráfico de pizza
                     daily_avg = []
-                    year = 2025  # Assumir ano; ajustar se necessário
+                    year = 2025  # Ano ajustado
                     for month in months:
                         days_in_month = calendar.monthrange(year, month_to_num[month])[1]
                         prod = city_df[month].iloc[0]
@@ -169,7 +171,7 @@ if uploaded_file is not None:
                     
                     daily_avg_df = pd.DataFrame(daily_avg)
                     fig_daily_pie = px.pie(daily_avg_df, values='Média Diária', names='Mês', 
-                                        title=f'Média de Produção Diária por Mês - {selected_city}')
+                                           title=f'Média de Produção Diária por Mês - {selected_city}')
                     fig_daily_pie.update_traces(textinfo='label+percent+value')
                     st.plotly_chart(fig_daily_pie)
                     
@@ -181,7 +183,7 @@ if uploaded_file is not None:
                     # Preparar dados para comparação
                     compare_total_df = pd.DataFrame()
                     for city in [max_city_total, selected_city, min_city_total]:
-                        city_data = df[df['CIDADE'] == city][months].sum().reset_index()
+                        city_data = df[df['CIDADE'] == city][months].transpose().reset_index()
                         city_data.columns = ['Mês', 'Produção']
                         city_data['Cidade'] = city
                         compare_total_df = pd.concat([compare_total_df, city_data], ignore_index=True)
@@ -190,7 +192,8 @@ if uploaded_file is not None:
                         fig_compare_total = px.line(compare_total_df, x='Mês', y='Produção', color='Cidade',
                                                     title=f'Comparação Produção Total: {max_city_total}, {selected_city}, {min_city_total}',
                                                     markers=True)
-                        fig_compare_total.update_traces(mode='lines+markers+text', text='%{y}', textposition='top center')
+                        fig_compare_total.update_traces(mode='lines+markers', text=compare_total_df['Produção'], textposition='top center')
+                        fig_compare_total.update_layout(showlegend=True)
                         st.plotly_chart(fig_compare_total)
                     else:
                         st.warning("Não foi possível gerar o gráfico de comparação devido a dados insuficientes.")
@@ -209,7 +212,7 @@ if uploaded_file is not None:
                         })
                         
                         fig_compare_month = px.bar(compare_month_df, x='Cidade', y='Produção',
-                                                title=f'Comparação no Mês {selected_month}: {max_city_month}, {selected_city}, {min_city_month}')
+                                                   title=f'Comparação no Mês {selected_month}: {max_city_month}, {selected_city}, {min_city_month}')
                         fig_compare_month.update_traces(texttemplate='%{y}', textposition='outside')
                         st.plotly_chart(fig_compare_month)
                     else:
@@ -262,14 +265,14 @@ if uploaded_file is not None:
                 # Preparar dados para gráficos de produção mês a mês
                 compare_prod_df = pd.DataFrame()
                 for city in selected_cities:
-                    city_data = compare_df[compare_df['CIDADE'] == city][months].sum().reset_index()
+                    city_data = compare_df[compare_df['CIDADE'] == city][months].transpose().reset_index()
                     city_data.columns = ['Mês', 'Produção']
                     city_data['Cidade'] = city
                     compare_prod_df = pd.concat([compare_prod_df, city_data], ignore_index=True)
                 
                 # 2. Gráfico de colunas com produção mês a mês (agrupado por cidade)
                 fig_comp_bar = px.bar(compare_prod_df, x='Mês', y='Produção', color='Cidade', barmode='group',
-                                    title=f'Produção Mês a Mês - Comparação')
+                                      title=f'Produção Mês a Mês - Comparação')
                 fig_comp_bar.update_traces(texttemplate='%{y}', textposition='outside')
                 st.plotly_chart(fig_comp_bar)
                 
@@ -277,12 +280,13 @@ if uploaded_file is not None:
                 fig_comp_line = px.line(compare_prod_df, x='Mês', y='Produção', color='Cidade',
                                         title=f'Produção Mensal (Linha) - Comparação',
                                         markers=True)
-                fig_comp_line.update_traces(mode='lines+markers+text', text='%{y}', textposition='top center')
+                fig_comp_line.update_traces(mode='lines+markers', text=compare_prod_df['Produção'], textposition='top center')
+                fig_comp_line.update_layout(showlegend=True)
                 st.plotly_chart(fig_comp_line)
                 
-                # 4. Média de produção diária de cada mês - Gráfico de barras (em vez de pizza para múltiplas cidades)
+                # 4. Média de produção diária de cada mês - Gráfico de barras
                 daily_avg_comp = []
-                year = 2025  # Assumir ano; ajustar se necessário
+                year = 2025  # Ano ajustado
                 for city in selected_cities:
                     city_row = compare_df[compare_df['CIDADE'] == city]
                     for month in months:
@@ -293,13 +297,11 @@ if uploaded_file is not None:
                 
                 daily_avg_comp_df = pd.DataFrame(daily_avg_comp)
                 fig_daily_bar = px.bar(daily_avg_comp_df, x='Mês', y='Média Diária', color='Cidade', barmode='group',
-                                    title=f'Média de Produção Diária por Mês - Comparação')
+                                       title=f'Média de Produção Diária por Mês - Comparação')
                 fig_daily_bar.update_traces(texttemplate='%{y:.2f}', textposition='outside')
                 st.plotly_chart(fig_daily_bar)
                 
-                # 5. Comparação total: Linha com produção mês a mês das cidades selecionadas (já coberto no 3)
-                
-                # 6. Comparação por mês selecionado: Barras para o mês específico
+                # 5. Comparação por mês selecionado: Barras para o mês específico
                 if selected_month_comp:
                     month_comp_data = compare_df[['CIDADE', selected_month_comp]].copy()
                     month_comp_data['Produção'] = month_comp_data[selected_month_comp]
