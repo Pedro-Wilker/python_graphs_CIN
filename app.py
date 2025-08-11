@@ -5,7 +5,7 @@ from datetime import datetime
 import calendar
 import numpy as np
 
-st.title("Análise das Produções de CIN Cidades Bahia")
+st.title("Análise das Produções de CIN das Cidades-Bahia")
 
 # Upload do arquivo Excel
 uploaded_file = st.file_uploader("Carregue sua planilha Excel (.xlsx)", type="xlsx")
