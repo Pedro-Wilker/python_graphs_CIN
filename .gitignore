@@ -1,0 +1,38 @@
+# .gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Ambiente virtual
+venv/
+.env
+
+# Arquivos de dados (exceto o principal)
+data/*.xlsx
+!data/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx
+
+# Arquivos temporários e de log
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de IDE/Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Arquivos de cache do Streamlit
+.streamlit/

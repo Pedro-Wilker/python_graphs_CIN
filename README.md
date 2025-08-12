@@ -1,0 +1,1 @@
+App Streamlit para análise de Excel. Rode com: streamlit run src/app.p
