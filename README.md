@@ -17,5 +17,3 @@ O **Sistema de Análise de CIN - SAEBA** é uma ferramenta desenvolvida pelo **S
 
 ### Fornecido por
 Este sistema é mantido pelo **SAEB - SAC - DOC**, com o objetivo de facilitar a tomada de decisão baseada em dados para a gestão de CIN na Bahia.
-
-
