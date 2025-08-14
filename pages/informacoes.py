@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
-from utils.data_utils import load_excel, parse_date_columns
+from utils.data_utils import load_excel, process_sheet_data
 
 # Caminho para o arquivo de cache
 CACHE_FILE = "informacoes_gerais.xlsx"
@@ -9,56 +9,19 @@ CACHE_FILE = "informacoes_gerais.xlsx"
 def load_and_process_data():
     """Carrega e processa dados da aba 'Informações' do Excel original."""
     try:
-        # Carrega a aba 'Informações' do arquivo original
+        # Carrega e processa a aba 'Informações'
         df = load_excel('Informações')
+        df = process_sheet_data(df, 'Informações')
         
-        # Colunas esperadas
-        expected_columns = [
-            'data/hora', 'Cidade', 'Nome do chefe de posto', 'Telefone Celular chefe de posto',
-            'Link WhatsApp', 'E-mail chefe de posto', 'Nome do Secretário/Coordenador',
-            'Telefone do Secretário', 'Link WhatsApp 2', 'Endereço do Posto', 'CEP',
-            'Ponto de referência do endereço', 'Telefone Fixo', 'Horário de abertura',
-            'Horário de Fechamento', 'E-mail da Prefeitura', 'Telefone da Prefeitura',
-            'PENDÊNCIA P/ VISITA TÉCNICA', 'Código do Posto'
-        ]
-        
-        # Verifica colunas ausentes
-        missing_columns = [col for col in expected_columns if col not in df.columns]
-        if missing_columns:
-            st.warning(f"Colunas ausentes na aba 'Informações': {', '.join(missing_columns)}")
-        
-        # Exibe colunas encontradas para depuração
+        # Exibe colunas encontradas e tipos de dados para depuração
         st.write("Colunas encontradas na aba 'Informações':", df.columns.tolist())
-        
-        # Exibe tipos de dados para depuração
         st.write("Tipos de dados das colunas:", df.dtypes.to_dict())
         
-        # Exibe amostra das colunas problemáticas
-        if 'PENDÊNCIA P/ VISITA TÉCNICA' in df.columns:
-            st.write("Amostra dos dados na coluna 'PENDÊNCIA P/ VISITA TÉCNICA' (primeiras 10 linhas):")
-            st.write(df['PENDÊNCIA P/ VISITA TÉCNICA'].head(10).tolist())
-        if 'Código do Posto' in df.columns:
-            st.write("Amostra dos dados na coluna 'Código do Posto' (primeiras 10 linhas):")
-            st.write(df['Código do Posto'].head(10).tolist())
-        
-        # Converte colunas de texto para string, tratando valores nulos e não-textuais
-        string_columns = [
-            'Cidade', 'Nome do chefe de posto', 'Telefone Celular chefe de posto',
-            'Link WhatsApp', 'E-mail chefe de posto', 'Nome do Secretário/Coordenador',
-            'Telefone do Secretário', 'Link WhatsApp 2', 'Endereço do Posto', 'CEP',
-            'Ponto de referência do endereço', 'Telefone Fixo', 'Horário de abertura',
-            'Horário de Fechamento', 'E-mail da Prefeitura', 'Telefone da Prefeitura',
-            'PENDÊNCIA P/ VISITA TÉCNICA', 'Código do Posto'
-        ]
-        for col in string_columns:
+        # Exibe amostra de colunas potencialmente problemáticas
+        for col in ['E-mail chefe de posto', 'PENDÊNCIA P/ VISITA TÉCNICA', 'Código do Posto']:
             if col in df.columns:
-                df[col] = df[col].apply(lambda x: str(x) if pd.notnull(x) else '').replace('nan', '')
-        
-        # Converte a coluna de data/hora
-        if 'data/hora' in df.columns:
-            df['data/hora'] = pd.to_datetime(df['data/hora'], format='%d/%m/%Y %H:%M', errors='coerce')
-        else:
-            st.warning("Coluna 'data/hora' não encontrada na aba 'Informações'.")
+                st.write(f"Amostra dos dados na coluna '{col}' (primeiras 10 linhas):")
+                st.write(df[col].head(10).tolist())
         
         # Salva os dados processados no arquivo de cache
         df.to_excel(CACHE_FILE, index=False, engine='openpyxl')
@@ -75,9 +38,8 @@ def load_cached_data():
     """Carrega os dados do arquivo de cache informacoes_gerais.xlsx."""
     try:
         df = pd.read_excel(CACHE_FILE, engine='openpyxl')
-        # Reaplica conversão de data/hora para garantir consistência
-        if 'data/hora' in df.columns:
-            df['data/hora'] = pd.to_datetime(df['data/hora'], errors='coerce')
+        # Reaplica processamento para garantir consistência
+        df = process_sheet_data(df, 'Informações')
         return df
     except Exception as e:
         st.warning(f"Erro ao carregar o arquivo de cache {CACHE_FILE}: {str(e)}")
