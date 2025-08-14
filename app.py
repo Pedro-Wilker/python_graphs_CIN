@@ -24,7 +24,7 @@ aba = st.sidebar.selectbox(
         "Produtividade", "Geral Amplo", "Lista X", "Geral Resumo",
         "Visitas Realizadas", "Ag. Visita", "Ag. Info Prefeitura",
         "Publicados", "Ag. Instalação", "Instalados", "Funcionando",
-        "Treina Turma", "Treina Cidade", "Informações", "Chefes Posto"
+        "Treina Turma", "Treina Cidade", "Informações", "Chefes_Posto"
     ]
 )
 
@@ -59,7 +59,7 @@ try:
         render_treina_cidade()
     elif aba == "Informações":
         render_informacoes()
-    elif aba == "Chefes Posto":
+    elif aba == "Chefes_Posto":
         render_chefes_posto()
 except Exception as e:
     st.error(f"Erro ao carregar a aba {aba}: {str(e)}")
