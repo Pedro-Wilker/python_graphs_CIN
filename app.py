@@ -14,6 +14,7 @@ from pages.treina_turma import render_treina_turma
 from pages.treina_cidade import render_treina_cidade
 from pages.informacoes import render_informacoes
 from pages.chefes_posto import render_chefes_posto
+from pages.upload_excel import render_upload_excel
 
 st.set_page_config(page_title="Análise CIN - Bahia", layout="wide")
 
@@ -24,7 +25,8 @@ aba = st.sidebar.selectbox(
         "Produtividade", "Geral Amplo", "Lista X", "Geral Resumo",
         "Visitas Realizadas", "Ag. Visita", "Ag. Info Prefeitura",
         "Publicados", "Ag. Instalação", "Instalados", "Funcionando",
-        "Treina Turma", "Treina Cidade", "Informações", "Chefes_Posto"
+        "Treina Turma", "Treina Cidade", "Informações", "Chefes Posto",
+        "Upload Excel"
     ]
 )
 
@@ -59,8 +61,10 @@ try:
         render_treina_cidade()
     elif aba == "Informações":
         render_informacoes()
-    elif aba == "Chefes_Posto":
+    elif aba == "Chefes Posto":
         render_chefes_posto()
+    elif aba == "Upload Excel":
+        render_upload_excel()
 except Exception as e:
     st.error(f"Erro ao carregar a aba {aba}: {str(e)}")
     st.write("Verifique se o arquivo 'ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx' está na raiz do projeto, possui a aba correspondente e contém as colunas esperadas no formato correto.")
