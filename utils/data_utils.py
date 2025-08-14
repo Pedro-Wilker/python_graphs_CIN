@@ -9,7 +9,6 @@ def load_excel(sheet_name):
     """Carrega uma aba do arquivo Excel e normaliza os nomes das colunas."""
     try:
         df = pd.read_excel(EXCEL_FILE, sheet_name=sheet_name, engine='openpyxl')
-        # Normalizar nomes das colunas
         df.columns = df.columns.str.replace('\n', ' ').str.strip().str.replace(r'\s+', ' ', regex=True)
         return df
     except Exception as e:
@@ -28,7 +27,6 @@ def parse_training_period(period):
         start_date_str = start_date_str.strip()
         end_date_str = end_date_str.strip()
         
-        # Se a data de início não tem ano, assume o ano da data de fim
         if start_date_str.count('/') == 1:
             end_year = re.search(r'(\d{2})$', end_date_str)
             if end_year:
