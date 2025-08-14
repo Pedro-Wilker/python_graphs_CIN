@@ -3,7 +3,7 @@ import pandas as pd
 from utils.data_utils import load_excel, parse_training_period, parse_date_columns
 
 def render_geral_resumo():
-    st.subheader("Geral Resumo")
+    st.subheader("Geral-Resumo")
     
     try:
         # Carregar a aba 'Geral-Resumo'
@@ -42,6 +42,6 @@ def render_geral_resumo():
         st.dataframe(df)
 
     except Exception as e:
-        st.error(f"Erro ao processar a aba Geral Resumo: {str(e)}")
+        st.error(f"Erro ao processar a aba Geral-Resumo: {str(e)}")
         st.write("Verifique se a aba 'Geral-Resumo' existe no arquivo Excel e contém as colunas esperadas.")
         st.stop()

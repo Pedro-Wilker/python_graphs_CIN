@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from utils.data_utils import load_excel, parse_training_period, parse_date_columns
+from utils.data_utils import load_excel, process_sheet_data
 from utils.plot_utils import (
     plot_max_min_production, plot_total_production, plot_training_pie,
     plot_city_production_bar, plot_city_production_line, plot_daily_avg_pie,
@@ -14,79 +14,42 @@ def render_produtividade():
     st.subheader("Análise de Produtividade")
     
     try:
+        # Carrega e processa os dados da aba 'Produtividade'
         df = load_excel('Produtividade')
+        df = process_sheet_data(df, 'Produtividade')
         
-        df.columns = df.columns.str.replace('PREFEITURA DE', 'PREFEITURAS DE')
-        
+        # Verifica colunas esperadas após process_sheet_data
         expected_columns = [
-            'CIDADE', 'PERÍODO PREVISTO DE TREINAMENTO', 'REALIZOU TREINAMENTO?', 
-            'DATA DA INSTALAÇÃO', 'PREFEITURAS DE', 'DATA DO INÍCIO ATEND.', 
-            'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 
-            'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'
+            'CIDADE', 'PERÍODO PREVISTO DE TREINAMENTO_INÍCIO', 'PERÍODO PREVISTO DE TREINAMENTO_FIM',
+            'REALIZOU TREINAMENTO?', 'DATA DA INSTALAÇÃO', 'PREFEITURA DE', 
+            'DATA DO INÍCIO ATEND.', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 
+            'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'
         ]
         missing_columns = [col for col in expected_columns if col not in df.columns]
         if missing_columns:
             st.error(f"Colunas ausentes na aba 'Produtividade': {', '.join(missing_columns)}")
             st.stop()
 
-        df['CIDADE'] = df['CIDADE'].astype(str).str.replace('\n', ' ').str.strip().str.replace(r'\s+', ' ', regex=True)
-        df['PREFEITURAS DE'] = df['PREFEITURAS DE'].astype(str).str.replace('\n', ' ').str.strip().str.replace(r'\s+', ' ', regex=True)
-        df['REALIZOU TREINAMENTO?'] = df['REALIZOU TREINAMENTO?'].astype(str).str.strip()
+        # Exibe colunas e tipos de dados para depuração
+        st.write("Colunas encontradas na aba 'Produtividade':", df.columns.tolist())
+        st.write("Tipos de dados das colunas:", df.dtypes.to_dict())
         
-        df = df[df['CIDADE'].notna() & (df['CIDADE'] != '') & (df['CIDADE'] != 'TOTAL')]
-        df = df[df['PREFEITURAS DE'].notna() & (df['PREFEITURAS DE'] != '')]
-        df = df[df['REALIZOU TREINAMENTO?'].isin(['Sim', 'Não'])]
-        
-        duplicate_cities = df[df['CIDADE'].duplicated(keep=False)]['CIDADE'].unique()
-        if len(duplicate_cities) > 0:
-            st.warning(f"Cidades duplicadas encontradas: {duplicate_cities.tolist()}. Agregando dados por cidade.")
+        # Exibe amostra dos dados (primeiras 5 linhas)
+        st.write("Amostra dos dados (primeiras 5 linhas):")
+        st.dataframe(df.head(5))
 
-        possible_months = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 
-                           'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO']
-        months = [m for m in possible_months if m in df.columns]
+        # Abas para organização
+        tab0, tab1, tab2, tab3 = st.tabs(["Tabela Completa", "Análise Individual", "Comparação de Cidades", "Comparação por Datas"])
 
-        if 'PERÍODO PREVISTO DE TREINAMENTO' in df.columns:
-            df[['DATA INÍCIO TREINAMENTO', 'DATA FIM TREINAMENTO']] = df['PERÍODO PREVISTO DE TREINAMENTO'].apply(parse_training_period).apply(pd.Series)
-        else:
-            df['DATA INÍCIO TREINAMENTO'] = pd.NaT
-            df['DATA FIM TREINAMENTO'] = pd.NaT
-
-        date_cols = ['DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.']
-        df = parse_date_columns(df, date_cols)
-
-        for month in months:
-            df[month] = pd.to_numeric(df[month], errors='coerce').fillna(0)
-
-        agg_dict = {month: 'sum' for month in months}
-        agg_dict.update({
-            'REALIZOU TREINAMENTO?': 'first',
-            'DATA DA INSTALAÇÃO': 'min',
-            'DATA DO INÍCIO ATEND.': 'min',
-            'DATA INÍCIO TREINAMENTO': 'min',
-            'DATA FIM TREINAMENTO': 'min',
-            'PREFEITURAS DE': 'first'
-        })
-        df = df.groupby('CIDADE').agg(agg_dict).reset_index()
-
-        st.subheader("Gráficos Gerais")
-        fig_max_min = plot_max_min_production(df, months)
-        if fig_max_min:
-            st.plotly_chart(fig_max_min)
-        else:
-            st.warning("Nenhum dado de produção disponível nos meses especificados.")
-
-        fig_total = plot_total_production(df, months)
-        st.plotly_chart(fig_total)
-
-        fig_pie = plot_training_pie(df)
-        st.plotly_chart(fig_pie)
-
-        tab1, tab2, tab3 = st.tabs(["Análise Individual", "Comparação de Cidades", "Comparação por Datas"])
+        with tab0:
+            st.subheader("Tabela Completa")
+            st.dataframe(df)
 
         with tab1:
+            st.subheader("Análise Individual")
             cities = df['CIDADE'].sort_values().unique().tolist()
-            selected_city = st.selectbox("Selecione uma Cidade", [''] + cities)
-            selected_month = st.selectbox("Selecione um Mês para Comparação", [''] + months)
+            selected_city = st.selectbox("Selecione uma Cidade", [''] + cities, key="city_select")
+            selected_month = st.selectbox("Selecione um Mês para Comparação", [''] + ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'])
 
             if selected_city:
                 city_df = df[df['CIDADE'] == selected_city]
@@ -97,8 +60,8 @@ def render_produtividade():
                     
                     install_date = city_df['DATA DA INSTALAÇÃO'].iloc[0]
                     start_date = city_df['DATA DO INÍCIO ATEND.'].iloc[0]
-                    training_start = city_df['DATA INÍCIO TREINAMENTO'].iloc[0]
-                    training_end = city_df['DATA FIM TREINAMENTO'].iloc[0]
+                    training_start = city_df['PERÍODO PREVISTO DE TREINAMENTO_INÍCIO'].iloc[0]
+                    training_end = city_df['PERÍODO PREVISTO DE TREINAMENTO_FIM'].iloc[0]
                     if pd.notnull(install_date) and pd.notnull(start_date):
                         diff_days = (start_date - install_date).days
                         st.write(f"Período entre Instalação ({install_date.date()}) e Início de Atendimento ({start_date.date()}): {diff_days} dias")
@@ -109,16 +72,16 @@ def render_produtividade():
                     else:
                         st.write("Período de Treinamento: Dados inválidos ou ausentes.")
 
-                    fig_bar = plot_city_production_bar(city_df, months, selected_city)
+                    fig_bar = plot_city_production_bar(city_df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], selected_city)
                     st.plotly_chart(fig_bar)
 
-                    fig_line = plot_city_production_line(city_df, months, selected_city)
+                    fig_line = plot_city_production_line(city_df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], selected_city)
                     st.plotly_chart(fig_line)
 
-                    fig_pie = plot_daily_avg_pie(city_df, months, selected_city)
+                    fig_pie = plot_daily_avg_pie(city_df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], selected_city)
                     st.plotly_chart(fig_pie)
 
-                    fig_compare = plot_compare_total(df, months, selected_city)
+                    fig_compare = plot_compare_total(df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], selected_city)
                     if fig_compare:
                         st.plotly_chart(fig_compare)
 
@@ -129,9 +92,10 @@ def render_produtividade():
                         st.write("Selecione um mês para a comparação por mês.")
 
         with tab2:
+            st.subheader("Comparação de Cidades")
             cities = df['CIDADE'].sort_values().unique().tolist()
             selected_cities = st.multiselect("Selecione Duas ou Mais Cidades para Comparação", cities)
-            selected_month_comp = st.selectbox("Selecione um Mês para Comparação (Opcional)", [''] + months)
+            selected_month_comp = st.selectbox("Selecione um Mês para Comparação (Opcional)", [''] + ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'])
             
             if len(selected_cities) >= 2:
                 compare_df = df[df['CIDADE'].isin(selected_cities)]
@@ -143,8 +107,8 @@ def render_produtividade():
                     if not city_row.empty:
                         install_date = city_row['DATA DA INSTALAÇÃO'].iloc[0]
                         start_date = city_row['DATA DO INÍCIO ATEND.'].iloc[0]
-                        training_start = city_row['DATA INÍCIO TREINAMENTO'].iloc[0]
-                        training_end = city_row['DATA FIM TREINAMENTO'].iloc[0]
+                        training_start = city_row['PERÍODO PREVISTO DE TREINAMENTO_INÍCIO'].iloc[0]
+                        training_end = city_row['PERÍODO PREVISTO DE TREINAMENTO_FIM'].iloc[0]
                         diff_days = (start_date - install_date).days if pd.notnull(install_date) and pd.notnull(start_date) else np.nan
                         period_data.append({
                             'Cidade': city, 
@@ -167,13 +131,13 @@ def render_produtividade():
                 period_df = pd.DataFrame(period_data)
                 st.dataframe(period_df)
                 
-                fig_bar = plot_compare_cities_bar(compare_df, months, selected_cities)
+                fig_bar = plot_compare_cities_bar(compare_df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], selected_cities)
                 st.plotly_chart(fig_bar)
                 
-                fig_line = plot_compare_cities_line(compare_df, months, selected_cities)
+                fig_line = plot_compare_cities_line(compare_df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], selected_cities)
                 st.plotly_chart(fig_line)
                 
-                fig_daily = plot_compare_cities_daily_avg(compare_df, months, selected_cities)
+                fig_daily = plot_compare_cities_daily_avg(compare_df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], selected_cities)
                 st.plotly_chart(fig_daily)
                 
                 if selected_month_comp:
@@ -237,7 +201,7 @@ def render_produtividade():
                 filtered_df = filtered_df[filtered_df['DATA DO INÍCIO ATEND.'].dt.month == month_num]
 
             if not filtered_df.empty and city_limit != "Sem limite":
-                filtered_df['Total Produção'] = filtered_df[months].sum(axis=1)
+                filtered_df['Total Produção'] = filtered_df[['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO']].sum(axis=1)
                 filtered_df = filtered_df.sort_values(by='Total Produção', ascending=False)
                 try:
                     limit = int(city_limit)
@@ -258,10 +222,10 @@ def render_produtividade():
             st.write(log_message)
 
             if not filtered_df.empty:
-                fig_bar = plot_compare_dates_bar(filtered_df, months, filter_type)
+                fig_bar = plot_compare_dates_bar(filtered_df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], filter_type)
                 st.plotly_chart(fig_bar)
 
-                fig_line = plot_compare_dates_line(filtered_df, months, filter_type)
+                fig_line = plot_compare_dates_line(filtered_df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], filter_type)
                 st.plotly_chart(fig_line)
             else:
                 warning_message = f"Nenhuma cidade encontrada com {filter_type} para "
@@ -270,6 +234,20 @@ def render_produtividade():
                     warning_message += "; Instalação: "
                     warning_message += f"mês {selected_month_install}" if selected_day_install == 'Qualquer' else f"dia {selected_day_install}, mês {selected_month_install}"
                 st.warning(warning_message)
+
+        # Gráficos gerais
+        st.subheader("Gráficos Gerais")
+        fig_max_min = plot_max_min_production(df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'])
+        if fig_max_min:
+            st.plotly_chart(fig_max_min)
+        else:
+            st.warning("Nenhum dado de produção disponível nos meses especificados.")
+
+        fig_total = plot_total_production(df, ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'])
+        st.plotly_chart(fig_total)
+
+        fig_pie = plot_training_pie(df)
+        st.plotly_chart(fig_pie)
 
     except Exception as e:
         st.error(f"Erro ao processar a aba Produtividade: {str(e)}")

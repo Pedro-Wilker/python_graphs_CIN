@@ -9,8 +9,8 @@ EXCEL_FILE = "ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
 
 # Definição dos tipos de dados esperados para cada aba (mantido igual ao anterior)
 SHEET_CONFIG = {
-    'Geral Amplo': {
-        'sheet_name': 'Geral Amplo',
+    'Geral-Amplo': {
+        'sheet_name': 'Geral-Amplo',
         'columns': {
             'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
             'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
@@ -71,7 +71,7 @@ SHEET_CONFIG = {
         'columns': {
             'CIDADE': {'type': 'string'},
             'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
-            'REALIZOU TREINAMENTO': {'type': 'boolean'},
+            'REALIZOU TREINAMENTO?': {'type': 'boolean'},
             'DATA DA INSTALAÇÃO': {'type': 'date', 'format': '%d/%m/%Y'},
             'PREFEITURA DE': {'type': 'string'},
             'DATA DO INÍCIO ATEND.': {'type': 'date', 'format': '%d/%m/%Y'},
@@ -85,7 +85,7 @@ SHEET_CONFIG = {
             'NOVEMBRO': {'type': 'float'},
             'DEZEMBRO': {'type': 'float'}
         }
-    }
+    },
 }
 
 def load_excel(sheet_name, file_path=EXCEL_FILE):
