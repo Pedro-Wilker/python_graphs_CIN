@@ -19,17 +19,18 @@ from pages.upload_excel import render_upload_excel
 # Configuração inicial da página
 st.set_page_config(page_title="Manipulador Excel - SAEB - SAV - DOS", layout="wide")
 
-# Estilo CSS para botões quadrados com bordas arredondadas e animação de hover
+# Estilo CSS para botões e sidebar
 st.markdown("""
     <style>
-    .button-container {
-        display: flex;
-        justify-content: center;
+    .carousel-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 20px;
         margin-top: 30px;
+        padding: 20px;
     }
-    .custom-button {
-        width: 200px;
+    .carousel-card {
+        width: 100%;
         height: 200px;
         display: flex;
         flex-direction: column;
@@ -46,15 +47,31 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         cursor: pointer;
     }
-    .custom-button:hover {
+    .carousel-card:hover {
         background-color: #004aad;
         color: white;
         transform: translateY(-5px);
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
-    .custom-button img {
-        width: 50px;
-        height: 50px;
+    .carousel-card .icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+    }
+    .stButton>button {
+        width: 100%;
+        border-radius: 15px;
+        border: 2px solid #004aad;
+        background-color: #f0f2f6;
+        color: #004aad;
+        font-weight: bold;
+    }
+    .stButton>button:hover {
+        background-color: #004aad;
+        color: white;
+    }
+    .st-expander {
+        border: 1px solid #004aad;
+        border-radius: 8px;
         margin-bottom: 10px;
     }
     </style>
@@ -67,73 +84,76 @@ if 'current_page' not in st.session_state:
 # Função para atualizar a página atual
 def set_page(page):
     st.session_state['current_page'] = page
+    st.rerun()
 
-# Sidebar com navegação
+# Sidebar com navegação estilo PanelMenu
 st.sidebar.title("Navegação")
-aba = st.sidebar.selectbox(
-    "Selecione a Aba",
-    [
-        "Home", "Produtividade", "Geral Amplo", "Lista X", "Geral Resumo",
-        "Visitas Realizadas", "Ag. Visita", "Ag. Info Prefeitura",
-        "Publicados", "Ag. Instalação", "Instalados", "Funcionando",
-        "Treina Turma", "Treina Cidade", "Informações", "Chefes Posto",
-        "Upload Excel"
-    ],
-    index=['Home', 'Produtividade', 'Geral Amplo', 'Lista X', 'Geral Resumo',
-           'Visitas Realizadas', 'Ag. Visita', 'Ag. Info Prefeitura',
-           'Publicados', 'Ag. Instalação', 'Instalados', 'Funcionando',
-           'Treina Turma', 'Treina Cidade', 'Informações', 'Chefes Posto',
-           'Upload Excel'].index(st.session_state['current_page'])
-)
+with st.sidebar:
+    with st.expander("Análise", expanded=True):
+        if st.button("Produtividade", icon=":material/credit_card:"):
+            set_page("Produtividade")
+        if st.button("Geral Amplo", icon=":material/dashboard:"):
+            set_page("Geral Amplo")
+        if st.button("Geral Resumo", icon=":material/summarize:"):
+            set_page("Geral Resumo")
+        if st.button("Lista X", icon=":material/list:"):
+            set_page("Lista X")
+    with st.expander("Agendamentos"):
+        if st.button("Ag. Visita", icon=":material/event:"):
+            set_page("Ag. Visita")
+        if st.button("Ag. Info Prefeitura", icon=":material/account_balance:"):
+            set_page("Ag. Info Prefeitura")
+        if st.button("Ag. Instalação", icon=":material/construction:"):
+            set_page("Ag. Instalação")
+    with st.expander("Status"):
+        if st.button("Visitas Realizadas", icon=":material/check_circle:"):
+            set_page("Visitas Realizadas")
+        if st.button("Publicados", icon=":material/publish:"):
+            set_page("Publicados")
+        if st.button("Instalados", icon=":material/done_all:"):
+            set_page("Instalados")
+        if st.button("Funcionando", icon=":material/play_circle:"):
+            set_page("Funcionando")
+    with st.expander("Treinamento"):
+        if st.button("Treina Turma", icon=":material/group:"):
+            set_page("Treina Turma")
+        if st.button("Treina Cidade", icon=":material/location_city:"):
+            set_page("Treina Cidade")
+    with st.expander("Outros"):
+        if st.button("Informações", icon=":material/info:"):
+            set_page("Informações")
+        if st.button("Chefes Posto", icon=":material/person:"):
+            set_page("Chefes Posto")
+        if st.button("Upload Excel", icon=":material/upload_file:"):
+            set_page("Upload Excel")
 
 # Título da página
 st.title("Seja Bem Vindo ao Manipulador Excel - SAEB - SAV - DOS")
 
-# Renderiza a página Home com os botões
+# Renderiza a página Home com botões em estilo carousel
 if st.session_state['current_page'] == 'Home':
-    st.markdown('<div class="button-container">', unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("CID", key="cid_button"):
-            set_page("Produtividade")
-            st.rerun()
-        st.markdown("""
-            <div class="custom-button" onclick="document.getElementById('cid_button').click()">
-                <img src="https://img.icons8.com/ios-filled/50/004aad/credit-card.png" alt="Card Icon"/>
-                CID
-            </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        if st.button("Modificar Excel", key="upload_button"):
-            set_page("Upload Excel")
-            st.rerun()
-        st.markdown("""
-            <div class="custom-button" onclick="document.getElementById('upload_button').click()">
-                <img src="https://img.icons8.com/ios-filled/50/004aad/upload.png" alt="Upload Icon"/>
-                Modificar Excel
-            </div>
-        """, unsafe_allow_html=True)
-
-    with col3:
-        if st.button("Informações", key="info_button"):
-            set_page("Informações")
-            st.rerun()
-        st.markdown("""
-            <div class="custom-button" onclick="document.getElementById('info_button').click()">
-                <img src="https://img.icons8.com/ios-filled/50/004aad/info.png" alt="Info Icon"/>
-                Informações
-            </div>
-        """, unsafe_allow_html=True)
-
+    st.markdown('<div class="carousel-container">', unsafe_allow_html=True)
+    
+    # Botões principais em um grid responsivo
+    buttons = [
+        ("CID", "Produtividade", ":material/credit_card:"),
+        ("Modificar Excel", "Upload Excel", ":material/upload_file:"),
+        ("Informações", "Informações", ":material/info:")
+    ]
+    
+    for i in range(0, len(buttons), 3):
+        cols = st.columns(3)
+        for j, (label, page, icon) in enumerate(buttons[i:i+3]):
+            with cols[j if j < len(cols) else 0]:
+                if st.button(label, icon=icon, key=f"{page}_button"):
+                    set_page(page)
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Renderiza as outras páginas com base na seleção
 try:
-    if st.session_state['current_page'] == 'Home' and aba != 'Home':
-        st.session_state['current_page'] = aba
-        st.rerun()
+    if st.session_state['current_page'] == 'Home' and st.sidebar.selectbox("Selecione a Aba", ["Home"], index=0, key="home_select") != 'Home':
+        set_page(st.sidebar.selectbox("Selecione a Aba", ["Home"], index=0, key="home_select"))
     elif st.session_state['current_page'] == 'Produtividade':
         render_produtividade()
     elif st.session_state['current_page'] == 'Geral Amplo':
