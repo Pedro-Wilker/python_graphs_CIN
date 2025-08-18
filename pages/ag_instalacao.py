@@ -36,10 +36,6 @@ def render_ag_instalacao():
     if missing_columns:
         st.warning(f"Colunas ausentes na aba 'Ag_Instalacao': {', '.join(missing_columns)}")
     
-    if 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA' in df.columns:
-        st.write("Valores únicos em 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA':", df['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].unique().tolist())
-    if 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA' in df.columns:
-        st.write("Valores únicos em 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':", df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].unique().tolist())
- 
+  
     st.markdown("### Tabela Completa")
     st.dataframe(df, use_container_width=True)

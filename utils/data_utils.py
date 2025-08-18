@@ -236,15 +236,11 @@ SHEET_CONFIG = {
 def load_excel(sheet_name, _file_path=EXCEL_FILE):
     """Carrega uma aba específica do arquivo Excel com caching."""
     try:
-        # Depuração: Exibir diretório de trabalho e caminhos testados
-        st.write(f"[DEBUG] Diretório de trabalho atual: {os.getcwd()}")
-        st.write(f"[DEBUG] Tentando caminho principal: {os.path.abspath(_file_path)}")
-        
+
         # Verificar se o arquivo existe no caminho principal
         file_path = _file_path
         if not os.path.exists(file_path):
             st.warning(f"Arquivo não encontrado no caminho principal: {os.path.abspath(file_path)}")
-            st.write(f"[DEBUG] Tentando caminho alternativo: {os.path.abspath(FALLBACK_EXCEL_FILE)}")
             file_path = FALLBACK_EXCEL_FILE
             if not os.path.exists(file_path):
                 st.error(f"Arquivo não encontrado no caminho alternativo: {os.path.abspath(file_path)}")
@@ -390,10 +386,7 @@ def process_sheet_data(df, sheet_name):
             # Depuração para PREVISÃO AJUSTE ESTRUTURA P/ VISITA
             if col == 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':
                 unique_values = df[col].unique()
-                if len(unique_values) <= 10:
-                    st.write(f"[DEBUG] Valores únicos na coluna '{col}' (aba {sheet_name}): {unique_values.tolist()}")
-                else:
-                    st.write(f"[DEBUG] Primeiros 10 valores únicos na coluna '{col}' (aba {sheet_name}): {unique_values[:10].tolist()}")
+
         elif col_type == 'categorical':
             allowed_values = col_config.get('values', [])
             df[col] = df[col].apply(lambda x: x if pd.notnull(x) and str(x).strip() in allowed_values else '')

@@ -52,17 +52,6 @@ def render_geral_resumo():
                 df[col] = False
             else:
                 df[col] = ''
-    
-    if 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA' in df.columns:
-        st.write("Valores únicos em 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA':", 
-                 df['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].unique().tolist())
-    if 'PARECER DA VISITA TÉCNICA' in df.columns:
-        st.write("Valores únicos em 'PARECER DA VISITA TÉCNICA':", 
-                 df['PARECER DA VISITA TÉCNICA'].unique().tolist())
-    if 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA' in df.columns:
-        st.write("Valores únicos em 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':", 
-                 df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].unique().tolist())
-    
-    
+        
     st.markdown("### Tabela Completa <span class='material-icons' style='vertical-align: middle; color: #004aad;'>table</span>")
     st.dataframe(df, use_container_width=True)

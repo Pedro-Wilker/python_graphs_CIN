@@ -25,9 +25,6 @@ def render_lista_x():
             st.warning(f"Colunas ausentes na aba 'Lista X': {', '.join(missing_columns)}")
             st.write("Colunas disponíveis:", df.columns.tolist())
         
-        if 'Parecer da visita técnica' in df.columns:
-            st.write("Valores únicos em 'Parecer da visita técnica':", df['Parecer da visita técnica'].unique().tolist())
-        
         st.markdown("### Tabela Completa")
         st.dataframe(df, use_container_width=True)
         

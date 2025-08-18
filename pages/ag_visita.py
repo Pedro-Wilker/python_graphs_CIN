@@ -42,16 +42,5 @@ def render_ag_visita():
             df[col] = '' if col in ['DATA DA VISITA TÉCNICA', 'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?', 
                                     'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES', 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA'] else df[col]
     
-    if 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA' in df.columns:
-        st.write("Valores únicos em 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA':", 
-                 df['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].unique().tolist())
-    if 'PARECER DA VISITA TÉCNICA' in df.columns:
-        st.write("Valores únicos em 'PARECER DA VISITA TÉCNICA':", 
-                 df['PARECER DA VISITA TÉCNICA'].unique().tolist())
-    if 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA' in df.columns:
-        st.write("Valores únicos em 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':", 
-                 df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].unique().tolist())
-    
-    
     st.markdown("### Tabela Completa")
     st.dataframe(df, use_container_width=True)

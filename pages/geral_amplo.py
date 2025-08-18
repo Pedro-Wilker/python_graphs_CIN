@@ -11,10 +11,7 @@ def render_geral_amplo():
         # Caminho do arquivo Excel relativo ao diretório do script
         excel_file = os.path.join(os.path.dirname(__file__), "..", "ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx")
         
-        # Depuração: Exibir diretório de trabalho e caminho absoluto
-        st.write(f"[DEBUG] Diretório de trabalho atual: {os.getcwd()}")
-        st.write(f"[DEBUG] Caminho absoluto do arquivo Excel: {os.path.abspath(excel_file)}")
-        
+
         # Verificar se o arquivo existe
         if not os.path.exists(excel_file):
             st.error(f"Arquivo não encontrado no caminho: {os.path.abspath(excel_file)}")
