@@ -1,0 +1,75 @@
+
+
+	SERVIÇO  		                           |                            ORGAO                     |     TEMPO      | DATA ULTIMA PUBLICACAO
+Solicitar Certificado Dispensa Serviço Alternativo Militar | JSM-PM/MD/CEB (COORDENAÇÃO DO EXERCITO BRASILEIRO)   | 501 | 09 de May de 2025 às 12:10	
+Solicitar Mediante Celebração de Termo de Acordo, a Utilização do Crédito Fiscal por Indústria Integrante do PRODEAGRO | SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO) | 613 | 10 de April de 2025 às 10:02
+Marcar Consulta Para Coloproctologista | SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE) | 724 | 14 de May de 2025 às 17:49
+Solicitar Reativação Malha Fiscal - Solicitação de Reativação de Inscrição Estadual no Cadastro de Contribuintes do ICMS de Empresa Inapta | SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO) | 613 | 10 de April de 2025 às 10:07		
+Marcar Consulta Para Otorrinolaringologista  | SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)    | 	  724	| 14 de May de 2025 às 17:50	
+Realizar Curso ou Instrução para Brigadas de Incêndio e Outros	 | CBMBA/CSCI (COMANDO DE SEGURANÇA CONTRA INCÊNDIO)	| 800	| 13 de May de 2025 às 14:48	
+Solicitar Credenciamento para Retenção do ICMS nas Transferências Internas de Cerveja, Chope e Refrigerante	|  SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	| 617 | 07 de December de 2023 às 11:36	
+Solicitar o Cancelamento de uma Autorização para Impressão de Documentos Fiscais – AIDF	| SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|    634	|	20 de November de 2023 às 15:28	
+Obter a 2ª Via da Conta da Embasa	| EMBASA/DF/FCO/FCOR (GERÊNCIA DE RELACIONAMENTO COM USUÁRIOS)	|  221	|	01 de August de 2025 às 10:45	
+Comprar Ingressos - TCA	 | FUNCEB/GERAF (GERENCIA ADMINISTRATIVA E FINANCEIRA TCA)	| 718    |	 06 de April de 2022 às 09:08	
+Realizar Consulta Tributária Formal		| 	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	128	
+Marcar Consulta Para Ginecologista		|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Solicitar Ligação Nova de Água - Embasa		| 	EMBASA/DF/FCO/FCOR (GERÊNCIA DE RELACIONAMENTO COM USUÁRIOS)	|	221	
+Emissão de Certificado Digital SSL ICP-Brasil	|	EGBA/DG/DT/GERCOM (GERÊNCIA COMERCIAL)		|	1683	
+Marcar Exame de Mamografia			| 	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	| 	724	
+Solicitar Expedição de Documentos		|	CBMBA/CSCI (COMANDO DE SEGURANÇA CONTRA INCÊNDIO)		|	800	
+Marcar Exame de Raio X				|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Solicitar Transferência de Hidrômetro - Embasa	|	EMBASA/DF/FCO/FCOR (GERÊNCIA DE RELACIONAMENTO COM USUÁRIOS)	|	221	
+Emitir Certificado de Antecedentes Criminais do Estado da Bahia		|	PCBA/GDG/OUV (OUVIDORIA DA POLÍCIA CIVIL)		|	464	
+Solicitar Mudança de Local de Medidor		|	COELBA/DPC/UAC (UNIDADE DE ATENDIMENTO AO CLIENTE)		|	221	
+Solicitar Isenção de ITD na Transmissão Causa Mortis do Único Imóvel Residencial	 |	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)		|	613	
+Solicitar Autorização para Implantação de Acesso dentro das Faixas de Domínio da SEINFRA - BAHIA	|	SEINFRA/GAB/SIT/DOT (DIRETORIA DE OPERAÇÃO E TRÁFEGO)	|	707	
+Solicitar Credenciamento para Obter o Benefício do Crédito Presumido de 33,33% do Valor do Imposto do Óleo Diesel	| 	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	617
+Marcar Consulta Para Angiologista	|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724
+Entregar Documentos e Mídia - Convênios 115/03 e 126/98		|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	640
+Solicitar Autorização para Armazenagem em Estabelecimento de Terceiros - ART. 10, V, do RICMS	|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	617	
+Marcar Exame de Colposcopia	|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Solicitar 1ª Habilitação - Permissão para Dirigir	|	DETRAN/DG/CTI (COORDENAÇÃO DE TECNOLOGIA E INFORMÁTICA)		|	529	
+Solicitar a Atualização do Balanço Patrimonial no Cadastro de Fornecedores do Estado da Bahia - CAF		|	SAEB/SRL/DSL/CGCF (COORDENAÇÃO DE GESTÃO DO CADASTRO DE FORNECEDORES)		|	739	
+Solicitar a Concessão, Alteração ou Renovação de Regime Especial - Dispensa de Emissão de Conhecimento de Transporte Decorrente de Repetidas Prestações Vinculadas a Contrato		|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	613	
+Marcar Exame de Tomografia Computadorizada Com Contraste	|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|		724	
+Solicitar Retificação de Documento de Arrecadação Estadual - DAE, DAE-NT, GNRE ou DAS	|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	613	
+Marcar Exame de Ultrassonografia - USG		|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Acessar Atlas Eólico da Bahia		|	SECTI/GAB/SDC (SUPERINTENDÊNCIA DE DESENVOLVIMENTO CIENTÍFICO)		|	190	
+Marcar Consulta Para Endocrinologista		|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Marcar Exame de Endoscopia Digestiva	|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Solicitar Informações sobre Mercadorias Apreendidas nas Inspetorias de Fiscalização de Trânsito de Mercadorias - IFMT	|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	617	
+Marcar Exame de Teste Ergométrico	|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Marcar Exame de Ecocardiografia - ECO	|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Cadastrar Prestador de Serviços Turísticos - CADASTUR/MTUR	|	SETUR/GAB-SETUR/SST/DRCST (DIRETORIA DE REGULAÇÃO E CERTIFICAÇÃO DE SERVIÇOS TURÍSTICOS)	|	640	
+Solicitar Religação de Água - Embasa	|	EMBASA/DF/FCO/FCOR (GERÊNCIA DE RELACIONAMENTO COM USUÁRIOS)	|	221	
+Quitar Débito Serviço Militar - Refratário	|	JSM-PM/MD/CEB (COORDENAÇÃO DO EXERCITO BRASILEIRO)	|	221	
+Marcar Exame de Ressonância Magnética	|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Obter a Lista de Documentos Solicitados pela Previdência Social		|	PMJAG/INSS/ACT (COORDENAÇÃO DO ACORDO DE COOPERAÇÃO TÉCNICA)	|	232	
+Denuncias e Reclamações Contra Consignatária	|	SAEB/SRH/DRH (DIRETORIA DE ADMINISTRAÇÃO E RECURSOS HUMANOS)		|	724	
+Fazer Cadastramento na Campanha Nota Premiada Bahia (NPB)	|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	1680	
+Realizar Consulta Individual de Pagamentos	|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	232	
+Solicitar Imunidade ou Não Incidência do Imposto de Transmissão "Causa Mortis" e Doações de Imóveis (ITD)	|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	641	
+Solicitar Canelamento de Nota Fiscal Eletrônica		|	PMGB/SEFAZ/GAB/COORD (COORDENAÇÃO DA SEFAZ)	|	543	
+Alterar Nome e Endereço Correspondência - IPTU		|	PMSSA/SEFAZ/OUV/SEATE (CHEFE DE ATENDIMENTO PRESENCIAL)		| 	221	
+Solicitar Inscrição / Renovação Cadastral - Serviços Especiais		|	AGERBA/DE/DPE/DPSE (DIRETORIA DE PESQUISAS SOCIO ECONOMICAS)	|	184	
+Consultar Débitos Mobiliários e Imobiliários		|	PMSSA/SEFAZ/OUV/SEATE (CHEFE DE ATENDIMENTO PRESENCIAL)		|	221	
+Solicitar Licença Prêmio - SESAB	|	SESAB/SUPERH (SUPERINTENDENCIA DE RECURSOS HUMANOS DA SAUDE)	|	232	
+Solicitar Isenção de IPVA para Veículos Destinados a Táxi (Taxistas)	|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	640	
+Solicitar Isenção de IPVA para Veículos Destinados à Pessoa com Deficiência (PcD)	|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	640	
+Solicitar Licença Para Interesse Particular - SESAB	|	SESAB/SUPERH (SUPERINTENDENCIA DE RECURSOS HUMANOS DA SAUDE)		|	232	
+Solicitar Defesa de Auto Infração	|	PMSSA/SEFAZ/OUV/SEATE (CHEFE DE ATENDIMENTO PRESENCIAL)			221	
+Solicitar Isenção de IPVA para Veículos de Embaixadas e Representações Consulares		SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)		|	617	
+Solicitar Isenção, Imunidade ou Não Incidência do Imposto de Transmissão "Causa Mortis" e Doações de Quaisquer Bens ou Direitos, Exceto Imóveis (ITD)		|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	232	
+Realizar Prova de Vida por representante legal (CURADOR/PROCURADOR) - Ceprev		|	SAEB/SUPREV/CRB (COORDENAÇÃO DE RELACIONAMENTO COM O BENEFICIÁRIO)	|	623	
+Marcar Consulta Para Urologista (Adulto)	|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Solicitar Licença Paternidade - SESAB	|	SESAB/SUPERH (SUPERINTENDENCIA DE RECURSOS HUMANOS DA SAUDE)	|	232	
+Solicitar Inscrição - Comercializadora de gás	|	AGERBA/DE/DPE/DPSE (DIRETORIA DE PESQUISAS SOCIO ECONOMICAS)	|	184	
+Marcar Exame de Ressonância Magnética Com Contraste	|	SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE)	|	724	
+Solicitar 2ª Via Certidão Alistamento Militar	|	JSM-PM/MD/CEB (COORDENAÇÃO DO EXERCITO BRASILEIRO)	|	221	
+Solicitar Inscrição / Renovação Cadastral - Administradoras de Terminais	|	AGERBA/DE/DPE/DPSE (DIRETORIA DE PESQUISAS SOCIO ECONOMICAS)	|	184	
+Atualizar Carimbos no Certificado Reservista Fora do Prazo - Exar	|	JSM-PM/MD/CEB (COORDENAÇÃO DO EXERCITO BRASILEIRO)	|	221	
+Realizar Cadastro como Trabalhador Autônomo no CONTRATE.BA	|	SETRE/GAB/APG/CGOTIC (COORDENAÇÃO DE GESTÃO ORGANIZACIONAL E TIC)	|	725	
+Solicitar Atestado de Desobrigação Militar	|	JSM-PM/MD/CEB (COORDENAÇÃO DO EXERCITO BRASILEIRO)	|	501	
+Emitir Certidão de Débitos Tributários Negativa de IPVA e de Baixa de Inscrição		|	SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO)	|	641	
+
+

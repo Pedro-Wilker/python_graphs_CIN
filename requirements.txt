@@ -1,5 +1,5 @@
-streamlit
-pandas
-plotly
-numpy
-openpyxl
+streamlit==1.48.1
+pandas>=2.2.2
+openpyxl>=3.1.2
+pyarrow>=17.0.0
+streamlit-option-menu>=0.3.12

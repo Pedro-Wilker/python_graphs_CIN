@@ -1,32 +1,27 @@
 import streamlit as st
 import pandas as pd
-from utils.data_utils import load_excel, parse_training_period, parse_date_columns
+from utils.data_utils import load_excel, process_sheet_data
 
 def render_chefes_posto():
     st.subheader("Chefes de Posto")
     
     try:
-        # Load the 'Chefes_Posto' sheet (updated to match the correct capitalization)
+        # Carrega a aba 'Chefes_Posto'
         df = load_excel('Chefes_Posto')
         
-        # Expected columns
+        # Colunas esperadas com base em SHEET_CONFIG
         expected_columns = [
-            'CIDADE', 'Nome do chefe de posto', 'Telefone Celular chefe de posto',
-            'Link WhatsApp', 'E-mail chefe de posto', 'Data treinamento'
+            'Cidade', 'Posto', 'Nome', 'E-mail', 'Telefone', 'Turma',
+            'Data treinamento', 'Usuário'
         ]
         missing_columns = [col for col in expected_columns if col not in df.columns]
         if missing_columns:
             st.warning(f"Colunas ausentes na aba 'Chefes_Posto': {', '.join(missing_columns)}")
 
-        # Parse training period if the column exists
-        if 'Data treinamento' in df.columns:
-            df[['DATA INÍCIO TREINAMENTO', 'DATA FIM TREINAMENTO']] = df['Data treinamento'].apply(parse_training_period).apply(pd.Series)
-        
-        # Parse date columns
-        date_cols = ['DATA INÍCIO TREINAMENTO', 'DATA FIM TREINAMENTO']
-        df = parse_date_columns(df, date_cols)
+        # Processa os dados usando process_sheet_data
+        df = process_sheet_data(df, 'Chefes_Posto')
 
-        # Display the dataframe
+        # Exibe o DataFrame
         st.dataframe(df)
 
     except Exception as e:
