@@ -3,3 +3,4 @@ pandas>=2.2.2
 openpyxl>=3.1.2
 pyarrow>=17.0.0
 streamlit-option-menu>=0.3.12
+plotly>=5.22.0

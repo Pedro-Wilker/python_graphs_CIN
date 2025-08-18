@@ -16,8 +16,8 @@ SHEET_CONFIG = {
             'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
             'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
             'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado']},
-            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'empty'},
-            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'empty'},
+            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'},
+            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'date', 'format': '%d/%m/%Y'},
             'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
             'TURMA': {'type': 'int'},
             'REALIZOU TREINAMENTO?': {'type': 'boolean'},
@@ -27,7 +27,8 @@ SHEET_CONFIG = {
             'DATA DA INSTALAÇÃO': {'type': 'date', 'format': '%d/%m/%Y'},
             'DATA DO INÍCIO ATEND.': {'type': 'date', 'format': '%d/%m/%Y'},
             'DATA ASSINATURA': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'}
+            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'},
+            'CIDADE': {'type': 'string'}  # Adicionado explicitamente
         }
     },
     'Lista X': {
@@ -55,8 +56,8 @@ SHEET_CONFIG = {
             'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
             'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
             'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado']},
-            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'empty'},
-            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'empty'},
+            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'},
+            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'date', 'format': '%d/%m/%Y'},
             'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
             'TURMA': {'type': 'int'},
             'REALIZOU TREINAMENTO?': {'type': 'boolean'},
@@ -74,7 +75,7 @@ SHEET_CONFIG = {
             'CIDADE': {'type': 'string'},
             'DATA DE ANÁLISE': {'type': 'date', 'format': '%d/%m/%Y'},
             'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
-            'ADEQUAÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'empty'}
+            'ADEQUAÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'}
         }
     },
     'Ag. Visita': {
@@ -84,8 +85,8 @@ SHEET_CONFIG = {
             'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
             'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
             'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado', '']},
-            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'empty'},
-            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'empty'},
+            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'},
+            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'date', 'format': '%d/%m/%Y'},
             'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'}
         }
     },
@@ -232,58 +233,76 @@ SHEET_CONFIG = {
 def load_excel(sheet_name, _file_path=EXCEL_FILE):
     """Carrega uma aba específica do arquivo Excel com caching."""
     try:
-        # Carrega apenas as colunas definidas em SHEET_CONFIG, se disponíveis
-        expected_cols = list(SHEET_CONFIG.get(sheet_name, {}).get('columns', {}).keys())
-        df = pd.read_excel(_file_path, sheet_name=sheet_name, engine='openpyxl', usecols=expected_cols if expected_cols else None)
+        # Carrega todas as colunas disponíveis, sem usar usecols
+        df = pd.read_excel(_file_path, sheet_name=sheet_name, engine='openpyxl')
         
-        # Limpar quebras de linha e espaços extras nos nomes das colunas
+        # Normalizar nomes das colunas
         df.columns = df.columns.str.replace('\n', ' ').str.strip().str.replace(r'\s+', ' ', regex=True)
+        df.columns = df.columns.str.replace('PREFEITURA DE', 'PREFEITURAS DE', regex=False)
         
-        # Limpar quebras de linha nos dados de todas as colunas de string
+        # Verificar colunas esperadas
+        expected_cols = list(SHEET_CONFIG.get(sheet_name, {}).get('columns', {}).keys())
+        missing_cols = [col for col in expected_cols if col not in df.columns]
+        if missing_cols:
+            st.warning(f"Colunas ausentes na aba '{sheet_name}': {', '.join(missing_cols)}")
+            st.write(f"Colunas disponíveis na aba '{sheet_name}': {df.columns.tolist()}")
+            # Adicionar colunas ausentes com valores padrão
+            for col in missing_cols:
+                col_type = SHEET_CONFIG.get(sheet_name, {}).get('columns', {}).get(col, {}).get('type', 'string')
+                if col_type in ['date', 'datetime', 'training_period']:
+                    df[col] = pd.NaT
+                elif col_type in ['boolean']:
+                    df[col] = False
+                elif col_type in ['int', 'float']:
+                    df[col] = 0
+                else:
+                    df[col] = ''
+        
+        # Limpar quebras de linha nos dados de colunas de string
         for col in df.columns:
             if df[col].dtype == 'object':
                 df[col] = df[col].apply(lambda x: str(x).replace('\n', ' ').strip() if pd.notnull(x) else '')
         
         return df
     except Exception as e:
-        raise Exception(f"Erro ao carregar a aba {sheet_name}: {str(e)}")
+        st.error(f"Erro ao carregar a aba {sheet_name}: {str(e)}")
+        return pd.DataFrame()  # Retorna DataFrame vazio em caso de erro
 
 def parse_training_period(period):
-    """Parseia o período de treinamento no formato 'dd/mm a dd/mm/yy' e retorna as datas de início e fim."""
+    """Parseia o período de treinamento em formatos variados e retorna as datas de início e fim."""
     if pd.isna(period) or period in ['-', '', 'VAZIO', 'N-PREV.', 'nan']:
-        return pd.Series(['', ''])
+        return pd.Series([pd.NaT, pd.NaT])
     
     try:
         period = str(period).strip()
         if not period or period in ['-', 'VAZIO', 'N-PREV.']:
-            return pd.Series(['', ''])
+            return pd.Series([pd.NaT, pd.NaT])
         
+        # Dividir em datas de início e fim
         parts = re.split(r'\s*(?:à|a)\s*', period, flags=re.IGNORECASE)
         if len(parts) != 2:
-            return pd.Series(['', ''])
+            return pd.Series([pd.NaT, pd.NaT])
         
         start_date, end_date = parts
-        end_parts = end_date.split('/')
-        if len(end_parts) == 3:
-            year = '20' + end_parts[2] if len(end_parts[2]) == 2 else end_parts[2]
-        elif len(end_parts) == 2:
-            year = '2025'
-        else:
-            return pd.Series(['', ''])
+        # Normalizar datas
+        for date in [start_date, end_date]:
+            parts = date.split('/')
+            if len(parts) == 2:
+                date = f"{date}/2025"  # Assumir 2025 se o ano não for especificado
         
-        start_parts = start_date.split('/')
-        if len(start_parts) == 2:
-            start_date = f"{start_date}/{year[-2:]}"
+        # Tentar diferentes formatos
+        for fmt in ['%d/%m/%Y', '%d/%m/%y']:
+            try:
+                start_dt = pd.to_datetime(start_date, format=fmt, errors='coerce')
+                end_dt = pd.to_datetime(end_date, format=fmt, errors='coerce')
+                if pd.notna(start_dt) and pd.notna(end_dt):
+                    return pd.Series([start_dt, end_dt])
+            except:
+                continue
         
-        start_date = pd.to_datetime(start_date, format='%d/%m/%y', errors='coerce')
-        end_date = pd.to_datetime(end_date, format='%d/%m/%y', errors='coerce')
-        
-        start_date = start_date.strftime('%d/%m/%Y') if pd.notna(start_date) else ''
-        end_date = end_date.strftime('%d/%m/%Y') if pd.notna(end_date) else ''
-        
-        return pd.Series([start_date, end_date])
+        return pd.Series([pd.NaT, pd.NaT])
     except Exception:
-        return pd.Series(['', ''])
+        return pd.Series([pd.NaT, pd.NaT])
 
 def clean_phone_number(phone):
     """Limpa e padroniza números de telefone."""
@@ -332,7 +351,15 @@ def process_sheet_data(df, sheet_name):
     config = SHEET_CONFIG[sheet_name]['columns']
     for col, col_config in config.items():
         if col not in df.columns:
-            df[col] = ''  # Adiciona coluna ausente com valor vazio
+            col_type = col_config['type']
+            if col_type in ['date', 'datetime', 'training_period']:
+                df[col] = pd.NaT
+            elif col_type in ['boolean']:
+                df[col] = False
+            elif col_type in ['int', 'float']:
+                df[col] = 0
+            else:
+                df[col] = ''
             continue
         
         col_type = col_config['type']
@@ -364,8 +391,6 @@ def process_sheet_data(df, sheet_name):
             df[col] = df[col].apply(clean_email)
         elif col_type == 'time':
             df[col] = df[col].apply(clean_time)
-        elif col_type == 'empty':
-            df[col] = df[col].apply(lambda x: '' if pd.notnull(x) and str(x).strip() in ['-', 'VAZIO', 'nan'] else str(x) if pd.notnull(x) else '')
     
     return df
 
@@ -373,10 +398,16 @@ def process_sheet_data(df, sheet_name):
 def process_excel_file():
     """Processa todas as abas do arquivo Excel e retorna um dicionário de DataFrames."""
     processed_data = {}
+    xls = pd.ExcelFile(EXCEL_FILE, engine='openpyxl')
     for sheet_name in SHEET_CONFIG.keys():
+        if sheet_name not in xls.sheet_names:
+            st.warning(f"Aba '{sheet_name}' não encontrada no arquivo Excel.")
+            processed_data[sheet_name] = pd.DataFrame()
+            continue
         try:
             df = load_excel(sheet_name)
             processed_data[sheet_name] = process_sheet_data(df, sheet_name)
         except Exception as e:
             st.warning(f"Erro ao processar a aba {sheet_name}: {str(e)}")
+            processed_data[sheet_name] = pd.DataFrame()
     return processed_data

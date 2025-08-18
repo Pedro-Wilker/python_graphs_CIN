@@ -1,59 +1,25 @@
 import streamlit as st
 import pandas as pd
-import os
 from utils.data_utils import load_excel, process_sheet_data
-
-CACHE_FILE = "informacoes_gerais.xlsx"
 
 @st.cache_data
 def load_and_process_informacoes():
-    """Carrega e processa a aba Informações com caching."""
     try:
         raw_df = load_excel('Informações')
-        st.write("Colunas brutas no Excel:", raw_df.columns.tolist())
-        st.write("Tipos de dados brutos:", raw_df.dtypes.to_dict())
+        if raw_df.empty:
+            st.error("Nenhum dado carregado para a aba 'Informações'. Verifique o arquivo Excel.")
+            return pd.DataFrame()
         
         df = process_sheet_data(raw_df, 'Informações')
-        
-        # Limpeza adicional
-        if 'PENDÊNCIA P/ VISITA TÉCNICA' in df.columns:
-            df['PENDÊNCIA P/ VISITA TÉCNICA'] = df['PENDÊNCIA P/ VISITA TÉCNICA'].str.replace('\n', ' ', regex=False).str.strip()
-        if 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA' in df.columns:
-            df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'] = df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].str.replace('\n', ' ', regex=False).str.strip()
-        
-        st.write("Colunas processadas:", df.columns.tolist())
-        st.write("Tipos de dados processados:", df.dtypes.to_dict())
-        if 'PENDÊNCIA P/ VISITA TÉCNICA' in df.columns:
-            st.write("Valores únicos em 'PENDÊNCIA P/ VISITA TÉCNICA':", df['PENDÊNCIA P/ VISITA TÉCNICA'].unique().tolist())
-        if 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA' in df.columns:
-            st.write("Valores únicos em 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':", df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].unique().tolist())
-        
-        df.to_excel(CACHE_FILE, index=False, engine='openpyxl')
         return df
     except Exception as e:
         st.error(f"Erro ao processar a aba Informações: {str(e)}")
-        st.stop()
-
-@st.cache_data
-def load_cached_data(_file_path=CACHE_FILE):
-    """Carrega dados do cache."""
-    try:
-        df = pd.read_excel(_file_path, engine='openpyxl')
-        df = process_sheet_data(df, 'Informações')
-        
-        # Limpeza adicional
-        if 'PENDÊNCIA P/ VISITA TÉCNICA' in df.columns:
-            df['PENDÊNCIA P/ VISITA TÉCNICA'] = df['PENDÊNCIA P/ VISITA TÉCNICA'].str.replace('\n', ' ', regex=False).str.strip()
-        if 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA' in df.columns:
-            df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'] = df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].str.replace('\n', ' ', regex=False).str.strip()
-        
-        return df
-    except Exception as e:
-        st.warning(f"Erro ao carregar o cache {_file_path}: {str(e)}")
-        return load_and_process_informacoes()
+        return pd.DataFrame()
 
 def render_informacoes():
-    st.subheader("Informações", icon=":material/info:")
+    st.markdown("""
+        <h3>Informações <span class="material-icons" style="vertical-align: middle; color: #004aad;">info</span></h3>
+    """, unsafe_allow_html=True)
     
     st.markdown("""
         <style>
@@ -71,6 +37,18 @@ def render_informacoes():
         </style>
     """, unsafe_allow_html=True)
     
+    # Carregar dados
+    df = load_and_process_informacoes()
+    if df.empty:
+        st.markdown("""
+        ### Possíveis Soluções
+        - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está no diretório correto.
+        - Confirme se a aba 'Informações' existe no arquivo Excel.
+        - Assegure-se de que as colunas esperadas estão presentes e formatadas corretamente.
+        """)
+        return
+    
+    # Verificar colunas esperadas
     expected_columns = [
         'data/hora', 'Cidade', 'Nome do chefe de posto', 'Telefone Celular chefe de posto',
         'Link WhatsApp', 'E-mail chefe de posto', 'Nome do Secretário/Coordenador',
@@ -79,31 +57,16 @@ def render_informacoes():
         'Horário de Fechamento', 'E-mail da Prefeitura', 'Telefone da Prefeitura',
         'PENDÊNCIA P/ VISITA TÉCNICA', 'Código do Posto', 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA'
     ]
-    
-    if st.button("Atualizar Dados", icon=":material/refresh:"):
-        st.write("Atualizando dados a partir do arquivo original...")
-        df = load_and_process_informacoes()
-        st.session_state['data_informacoes'] = df
-        st.success("Dados atualizados com sucesso!")
-    else:
-        if os.path.exists(CACHE_FILE):
-            df = load_cached_data()
-        else:
-            st.write("Arquivo de cache não encontrado. Carregando dados do arquivo original...")
-            df = load_and_process_informacoes()
-        
-        st.session_state['data_informacoes'] = df
-    
-    df = st.session_state.get('data_informacoes')
-    
-    if df is None:
-        st.error("Nenhum dado carregado. Tente atualizar os dados.")
-        st.stop()
-    
     missing_columns = [col for col in expected_columns if col not in df.columns]
     if missing_columns:
         st.warning(f"Colunas ausentes na aba 'Informações': {', '.join(missing_columns)}")
     
+    # Carregar dados na sessão
+    st.session_state['data_informacoes'] = df
+    
+    df = st.session_state.get('data_informacoes', df)
+    
+    # Interface de busca
     with st.container():
         st.markdown('<div class="search-container"><h3>Buscar Informações</h3>', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
@@ -120,6 +83,7 @@ def render_informacoes():
         
         st.markdown('</div>', unsafe_allow_html=True)
     
+    # Filtragem
     filtered_df = df
     if search_city:
         filtered_df = filtered_df[filtered_df['Cidade'].str.contains(search_city, case=False, na=False)]
@@ -134,12 +98,13 @@ def render_informacoes():
     if search_pendency:
         filtered_df = filtered_df[filtered_df['PENDÊNCIA P/ VISITA TÉCNICA'].str.contains(search_pendency, case=False, na=False)]
     
-    if filtered_df.empty:
+    # Exibir resultados
+    if filtered_df.empty and (search_city or search_chief or search_email or search_secretary or search_address or search_pendency):
         st.warning("Nenhum dado encontrado para os critérios de busca.")
     else:
-        st.subheader("Resultados da Busca")
+        st.markdown("### Resultados da Busca")
         st.dataframe(filtered_df, use_container_width=True)
     
     if not (search_city or search_chief or search_email or search_secretary or search_address or search_pendency):
-        st.subheader("Tabela Completa")
+        st.markdown("### Tabela Completa")
         st.dataframe(df, use_container_width=True)

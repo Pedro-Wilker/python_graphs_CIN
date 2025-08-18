@@ -35,21 +35,19 @@ def parse_data_linha(linha):
     }
 
 def carregar_dados():
-    with open(ARQUIVO, encoding='utf-8') as f:
-        linhas = f.readlines()
-    dados = []
-    for linha in linhas[1:]:
-        if linha.strip():
-            item = parse_data_linha(linha)
-            if item:
-                dados.append(item)
-    return pd.DataFrame(dados)
-
-def salvar_dados(df):
-    with open(ARQUIVO, 'w', encoding='utf-8') as f:
-        f.write('SERVIÇO | ORGAO | TEMPO | DATA ULTIMA PUBLICACAO\n')
-        for _, row in df.iterrows():
-            f.write(f"{row['SERVIÇO']} | {row['ORGAO']} | {row['TEMPO']} | {row['DATA ULTIMA PUBLICACAO']}\n")
+    try:
+        with open(ARQUIVO, encoding='utf-8') as f:
+            linhas = f.readlines()
+        dados = []
+        for linha in linhas[1:]:
+            if linha.strip():
+                item = parse_data_linha(linha)
+                if item:
+                    dados.append(item)
+        return pd.DataFrame(dados)
+    except Exception as e:
+        st.error(f"Erro ao carregar o arquivo revisarservicos.txt: {str(e)}")
+        return pd.DataFrame()
 
 def atualizar_tempo(df):
     hoje = datetime.datetime.now()
@@ -63,41 +61,22 @@ def atualizar_tempo(df):
             pass
     return df
 
-def main():
-    st.title("Serviços a Revisar")
-
+def render_servicos_a_revisar():
+    st.markdown("""
+        <h3>Serviços a Revisar <span class="material-icons" style="vertical-align: middle; color: #004aad;">checklist</span></h3>
+    """, unsafe_allow_html=True)
+    
     df = carregar_dados()
+    if df.empty:
+        st.error("Nenhum dado carregado do arquivo revisarservicos.txt.")
+        st.markdown("""
+        ### Possíveis Soluções
+        - Verifique se o arquivo `revisarservicos.txt` está no diretório raiz do projeto.
+        - Confirme se o arquivo contém dados no formato correto (ex.: SERVIÇO | ORGAO | TEMPO | DATA ULTIMA PUBLICACAO).
+        """)
+        return
+    
     df = atualizar_tempo(df)
-
+    
+    st.markdown("### Dados de Serviços a Revisar")
     st.dataframe(df, use_container_width=True)
-
-    with st.expander("Adicionar novo serviço"):
-        servico = st.text_input("Serviço")
-        orgao = st.text_input("Órgão")
-        data_pub = st.date_input("Data última publicação", datetime.date.today())
-        hora_pub = st.time_input("Hora última publicação", datetime.datetime.now().time())
-        if st.button("Adicionar"):
-            nova_data = f"{data_pub.strftime('%d/%m/%Y')} {hora_pub.strftime('%H:%M')}"
-            novo = {'SERVIÇO': servico, 'ORGAO': orgao, 'TEMPO': 0, 'DATA ULTIMA PUBLICACAO': nova_data}
-            df = pd.concat([df, pd.DataFrame([novo])], ignore_index=True)
-            salvar_dados(df)
-            st.success("Serviço adicionado!")
-
-    st.write("Selecione uma linha para editar ou apagar:")
-
-    if not df.empty:
-        idx = st.selectbox("Linha", df.index)
-        if st.button("Apagar"):
-            df = df.drop(idx).reset_index(drop=True)
-            salvar_dados(df)
-            st.success("Serviço removido!")
-        with st.expander("Editar linha selecionada"):
-            servico_edit = st.text_input("Serviço", value=df.at[idx, 'SERVIÇO'])
-            orgao_edit = st.text_input("Órgão", value=df.at[idx, 'ORGAO'])
-            data_edit = st.text_input("Data última publicação", value=df.at[idx, 'DATA ULTIMA PUBLICACAO'])
-            if st.button("Salvar edição"):
-                df.at[idx, 'SERVIÇO'] = servico_edit
-                df.at[idx, 'ORGAO'] = orgao_edit
-                df.at[idx, 'DATA ULTIMA PUBLICACAO'] = data_edit
-                salvar_dados(df)
-                st.success("Serviço atualizado!")

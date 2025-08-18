@@ -4,37 +4,74 @@ import plotly.express as px
 from datetime import datetime
 import calendar
 import numpy as np
-from utils.data_utils import load_excel, process_sheet_data
+import re
 
 @st.cache_data
 def load_and_process_produtividade():
     """Carrega e processa a aba Produtividade com caching."""
     try:
-        raw_df = load_excel('Produtividade')
+        # Caminho do arquivo Excel
+        excel_file = "C:/Users/re049227/Documents/pythonGraphs/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
+        
+        # Ler a aba 'Produtividade' diretamente
+        raw_df = pd.read_excel(excel_file, sheet_name='Produtividade', engine='openpyxl')
+        
+        # Normalizar nomes das colunas
+        raw_df.columns = raw_df.columns.str.replace('\n', ' ').str.strip().str.replace(r'\s+', ' ', regex=True)
+        raw_df.columns = raw_df.columns.str.replace('PREFEITURA DE', 'PREFEITURAS DE')
+        
         st.write("Colunas brutas no Excel:", raw_df.columns.tolist())
         st.write("Tipos de dados brutos:", raw_df.dtypes.to_dict())
         
-        df = process_sheet_data(raw_df, 'Produtividade')
-        
         # Verificar colunas esperadas
         expected_columns = [
-            'CIDADE', 'PERÍODO PREVISTO DE TREINAMENTO_INÍCIO', 'PERÍODO PREVISTO DE TREINAMENTO_FIM',
-            'REALIZOU TREINAMENTO?', 'DATA DA INSTALAÇÃO', 'PREFEITURAS DE', 'DATA DO INÍCIO ATEND.',
+            'CIDADE', 'PERÍODO PREVISTO DE TREINAMENTO', 'REALIZOU TREINAMENTO?', 
+            'DATA DA INSTALAÇÃO', 'PREFEITURAS DE', 'DATA DO INÍCIO ATEND.',
             'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO'
         ]
-        missing_columns = [col for col in expected_columns if col not in df.columns]
+        missing_columns = [col for col in expected_columns if col not in raw_df.columns]
         if missing_columns:
             st.warning(f"Colunas ausentes na aba 'Produtividade': {', '.join(missing_columns)}")
-            st.write("Colunas disponíveis no DataFrame processado:", df.columns.tolist())
+            st.write("Colunas disponíveis no DataFrame:", raw_df.columns.tolist())
             # Adiciona colunas ausentes com valores padrão
             for col in missing_columns:
-                if col in ['PERÍODO PREVISTO DE TREINAMENTO_INÍCIO', 'PERÍODO PREVISTO DE TREINAMENTO_FIM', 
-                           'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.']:
-                    df[col] = ''
+                if col in ['PERÍODO PREVISTO DE TREINAMENTO', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.', 'PREFEITURAS DE']:
+                    raw_df[col] = ''
                 elif col == 'REALIZOU TREINAMENTO?':
-                    df[col] = False
+                    raw_df[col] = False
                 elif col in ['ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO']:
-                    df[col] = 0.0
+                    raw_df[col] = 0.0
+        
+        df = raw_df
+        
+        # Tratar a coluna PERÍODO PREVISTO DE TREINAMENTO
+        if 'PERÍODO PREVISTO DE TREINAMENTO' in df.columns:
+            def parse_training_period(period):
+                if pd.isna(period) or not isinstance(period, str) or period.strip() == '' or period.strip().upper() == 'N-PREV.':
+                    return pd.NaT, pd.NaT
+                try:
+                    dates = re.split(r'\s*(?:à|a)\s*', period.strip(), flags=re.IGNORECASE)
+                    if len(dates) != 2:
+                        return pd.NaT, pd.NaT
+                    start_date_str, end_date_str = dates
+                    start_date_str = start_date_str.strip()
+                    if start_date_str.count('/') == 1:
+                        start_date = pd.to_datetime(f"{start_date_str}/2025", format='%d/%m/%Y', errors='coerce')
+                    else:
+                        start_date = pd.to_datetime(start_date_str, format='%d/%m/%Y', errors='coerce')
+                    end_date_str = end_date_str.strip()
+                    if end_date_str.count('/') == 1:
+                        end_date = pd.to_datetime(f"{end_date_str}/2025", format='%d/%m/%Y', errors='coerce')
+                    else:
+                        end_date = pd.to_datetime(end_date_str, format='%d/%m/%Y', errors='coerce')
+                    return start_date, end_date
+                except Exception:
+                    return pd.NaT, pd.NaT
+            
+            df[['DATA INÍCIO TREINAMENTO', 'DATA FIM TREINAMENTO']] = df['PERÍODO PREVISTO DE TREINAMENTO'].apply(parse_training_period).apply(pd.Series)
+        else:
+            df['DATA INÍCIO TREINAMENTO'] = pd.NaT
+            df['DATA FIM TREINAMENTO'] = pd.NaT
         
         # Exibe valores únicos para colunas críticas
         if 'REALIZOU TREINAMENTO?' in df.columns:
@@ -43,12 +80,18 @@ def load_and_process_produtividade():
         return df
     except Exception as e:
         st.error(f"Erro ao processar a aba Produtividade: {str(e)}")
-        st.stop()
+        return pd.DataFrame()  # Retorna DataFrame vazio em caso de erro
 
 def render_produtividade():
-    st.subheader("Produtividade", icon=":material/bar_chart:")
+    st.markdown("""
+        <h3>Produtividade <span class="material-icons" style="vertical-align: middle; color: #004aad;">bar_chart</span></h3>
+    """, unsafe_allow_html=True)
     
     df = load_and_process_produtividade()
+    
+    if df.empty:
+        st.error("Nenhum dado disponível para a aba Produtividade. Verifique o arquivo Excel.")
+        return
     
     # Filtrar linhas válidas
     df['CIDADE'] = df['CIDADE'].astype(str).str.strip().replace('nan', '')
@@ -63,11 +106,11 @@ def render_produtividade():
         st.warning(f"Cidades duplicadas encontradas: {duplicate_cities.tolist()}. Agregando dados por cidade.")
     
     # Detectar colunas de meses
-    possible_months = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO']
+    possible_months = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO']
     months = [m for m in possible_months if m in df.columns]
     
     # Converter colunas de datas para datetime
-    date_cols = ['DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.', 'PERÍODO PREVISTO DE TREINAMENTO_INÍCIO', 'PERÍODO PREVISTO DE TREINAMENTO_FIM']
+    date_cols = ['DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.', 'DATA INÍCIO TREINAMENTO', 'DATA FIM TREINAMENTO']
     for col in date_cols:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], format='%d/%m/%Y', errors='coerce')
@@ -82,14 +125,14 @@ def render_produtividade():
         'REALIZOU TREINAMENTO?': 'first',
         'DATA DA INSTALAÇÃO': 'min',
         'DATA DO INÍCIO ATEND.': 'min',
-        'PERÍODO PREVISTO DE TREINAMENTO_INÍCIO': 'min',
-        'PERÍODO PREVISTO DE TREINAMENTO_FIM': 'min',
+        'DATA INÍCIO TREINAMENTO': 'min',
+        'DATA FIM TREINAMENTO': 'min',
         'PREFEITURAS DE': 'first'
     })
     df = df.groupby('CIDADE').agg(agg_dict).reset_index()
     
     # Gráficos gerais
-    st.subheader("Gráficos Gerais")
+    st.markdown("<h3>Gráficos Gerais</h3>", unsafe_allow_html=True)
     
     # 1. Cidade que mais e menos produziu em cada mês - Gráfico de linhas
     max_min_data = []
@@ -147,13 +190,13 @@ def render_produtividade():
             if city_df.empty:
                 st.warning("Nenhum dado encontrado para a cidade selecionada.")
             else:
-                st.subheader(f"Análise para a Cidade: {selected_city}")
+                st.markdown(f"<h3>Análise para a Cidade: {selected_city}</h3>", unsafe_allow_html=True)
                 
                 # 1. Relatório entre período de instalação, treinamento e data de início
                 install_date = city_df['DATA DA INSTALAÇÃO'].iloc[0]
                 start_date = city_df['DATA DO INÍCIO ATEND.'].iloc[0]
-                training_start = city_df['PERÍODO PREVISTO DE TREINAMENTO_INÍCIO'].iloc[0]
-                training_end = city_df['PERÍODO PREVISTO DE TREINAMENTO_FIM'].iloc[0]
+                training_start = city_df['DATA INÍCIO TREINAMENTO'].iloc[0]
+                training_end = city_df['DATA FIM TREINAMENTO'].iloc[0]
                 if pd.notnull(install_date) and pd.notnull(start_date):
                     diff_days = (start_date - install_date).days
                     st.write(f"Período entre Instalação ({install_date.date()}) e Início de Atendimento ({start_date.date()}): {diff_days} dias")
@@ -185,7 +228,7 @@ def render_produtividade():
                 year = 2025
                 month_to_num = {
                     'JANEIRO': 1, 'FEVEREIRO': 2, 'MARÇO': 3, 'ABRIL': 4, 'MAIO': 5, 'JUNHO': 6,
-                    'JULHO': 7, 'AGOSTO': 8
+                    'JULHO': 7, 'AGOSTO': 8, 'SETEMBRO': 9, 'OUTUBRO': 10, 'NOVEMBRO': 11, 'DEZEMBRO': 12
                 }
                 for month in months:
                     days_in_month = calendar.monthrange(year, month_to_num[month])[1]
@@ -251,7 +294,7 @@ def render_produtividade():
         
         if len(selected_cities) >= 2:
             compare_df = df[df['CIDADE'].isin(selected_cities)]
-            st.subheader(f"Comparação entre Cidades: {', '.join(selected_cities)}")
+            st.markdown(f"<h3>Comparação entre Cidades: {', '.join(selected_cities)}</h3>", unsafe_allow_html=True)
             
             # 1. Relatório entre período de instalação, treinamento e data de início
             period_data = []
@@ -260,8 +303,8 @@ def render_produtividade():
                 if not city_row.empty:
                     install_date = city_row['DATA DA INSTALAÇÃO'].iloc[0]
                     start_date = city_row['DATA DO INÍCIO ATEND.'].iloc[0]
-                    training_start = city_row['PERÍODO PREVISTO DE TREINAMENTO_INÍCIO'].iloc[0]
-                    training_end = city_row['PERÍODO PREVISTO DE TREINAMENTO_FIM'].iloc[0]
+                    training_start = city_row['DATA INÍCIO TREINAMENTO'].iloc[0]
+                    training_end = city_row['DATA FIM TREINAMENTO'].iloc[0]
                     diff_days = (start_date - install_date).days if pd.notnull(install_date) and pd.notnull(start_date) else np.nan
                     period_data.append({
                         'Cidade': city, 
@@ -337,11 +380,11 @@ def render_produtividade():
             st.info("Selecione pelo menos duas cidades para realizar a comparação.")
     
     with tab3:
-        st.subheader("Comparação por Datas")
+        st.markdown("<h3>Comparação por Datas</h3>", unsafe_allow_html=True)
         try:
             month_to_num = {
                 'JANEIRO': 1, 'FEVEREIRO': 2, 'MARÇO': 3, 'ABRIL': 4, 'MAIO': 5, 'JUNHO': 6,
-                'JULHO': 7, 'AGOSTO': 8
+                'JULHO': 7, 'AGOSTO': 8, 'SETEMBRO': 9, 'OUTUBRO': 10, 'NOVEMBRO': 11, 'DEZEMBRO': 12
             }
             
             filter_type = st.selectbox("Selecione o Tipo de Comparação", [
@@ -369,14 +412,15 @@ def render_produtividade():
             month_num = month_to_num.get(selected_month_date)
             if month_num is None:
                 st.error(f"Erro: Mês '{selected_month_date}' não encontrado no mapeamento de meses.")
-                st.stop()
+                return
+            
             month_num_install = month_to_num.get(selected_month_install) if selected_month_install else None
             
             filtered_df = df.copy()
             if filter_type == "Mesmo Dia e Mês de Data de Instalação":
                 if 'DATA DA INSTALAÇÃO' not in df.columns:
                     st.error("Coluna 'DATA DA INSTALAÇÃO' não encontrada no DataFrame.")
-                    st.stop()
+                    return
                 filtered_df = filtered_df[filtered_df['DATA DA INSTALAÇÃO'].notna()]
                 if selected_day != 'Qualquer':
                     filtered_df = filtered_df[filtered_df['DATA DA INSTALAÇÃO'].dt.day == int(selected_day)]
@@ -384,7 +428,7 @@ def render_produtividade():
             elif filter_type == "Mesmo Dia e Mês de Data de Início de Atendimento":
                 if 'DATA DO INÍCIO ATEND.' not in df.columns:
                     st.error("Coluna 'DATA DO INÍCIO ATEND.' não encontrada no DataFrame.")
-                    st.stop()
+                    return
                 filtered_df = filtered_df[filtered_df['DATA DO INÍCIO ATEND.'].notna()]
                 if selected_day != 'Qualquer':
                     filtered_df = filtered_df[filtered_df['DATA DO INÍCIO ATEND.'].dt.day == int(selected_day)]
@@ -393,10 +437,10 @@ def render_produtividade():
                 if 'DATA DA INSTALAÇÃO' not in df.columns or 'DATA DO INÍCIO ATEND.' not in df.columns:
                     missing_date_cols = [col for col in ['DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.'] if col not in df.columns]
                     st.error(f"Colunas de data ausentes no DataFrame: {', '.join(missing_date_cols)}")
-                    st.stop()
+                    return
                 if month_num_install is None:
                     st.error("Erro: Mês de instalação não especificado para a opção 'Ambos'.")
-                    st.stop()
+                    return
                 filtered_df = filtered_df[filtered_df['DATA DA INSTALAÇÃO'].notna() & filtered_df['DATA DO INÍCIO ATEND.'].notna()]
                 if selected_day_install != 'Qualquer':
                     filtered_df = filtered_df[filtered_df['DATA DA INSTALAÇÃO'].dt.day == int(selected_day_install)]
@@ -454,3 +498,13 @@ def render_produtividade():
                 st.warning(warning_message)
         except Exception as e:
             st.error(f"Ocorreu um erro durante a comparação por datas: {str(e)}")
+            st.write("Detalhes do erro:")
+            st.write(f"- Tipo de comparação: {filter_type}")
+            st.write(f"- Dia (Início Atend.): {selected_day}")
+            st.write(f"- Mês (Início Atend.): {selected_month_date}")
+            if filter_type == "Ambos (Data de Instalação e Início de Atendimento)":
+                st.write(f"- Dia (Instalação): {selected_day_install}")
+                st.write(f"- Mês (Instalação): {selected_month_install}")
+            st.write(f"- Limite de cidades: {city_limit}")
+            st.write(f"- Colunas no DataFrame: {list(df.columns)}")
+            st.write("Verifique se as colunas 'DATA DA INSTALAÇÃO' e 'DATA DO INÍCIO ATEND.' estão no formato 'DD/MM/YYYY' e não contêm valores inválidos.")
