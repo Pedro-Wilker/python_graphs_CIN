@@ -14,7 +14,7 @@ def render_upload_excel():
         sheets = xls.sheet_names
         
         st.markdown("### Abas Disponíveis")
-        st.write("Abas encontradas no arquivo:", sheets)
+   
         
         # Seleção da aba para visualização
         selected_sheet = st.selectbox("Selecione uma aba para visualizar", sheets, key="upload_excel_sheet")
@@ -32,8 +32,7 @@ def render_upload_excel():
             
             # Exibe colunas e tipos de dados
             st.markdown("### Colunas Encontradas")
-            st.write("Colunas:", df.columns.tolist())
-            st.write("Tipos de dados:", df.dtypes.to_dict())
+  
             
             # Exibe amostra de dados
             st.markdown("### Amostra dos Dados (Primeiras 5 Linhas)")

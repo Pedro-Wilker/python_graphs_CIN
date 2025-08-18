@@ -6,7 +6,7 @@ import streamlit as st
 import os
 
 # Caminho do arquivo Excel local
-EXCEL_FILE = r"C:\Users\re049227\Documents\pythonGraphs\ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
+EXCEL_FILE = r"../ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
 
 # Definição dos tipos de dados esperados para cada aba
 SHEET_CONFIG = {

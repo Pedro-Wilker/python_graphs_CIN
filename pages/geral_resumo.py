@@ -7,8 +7,6 @@ def load_and_process_geral_resumo():
     """Carrega e processa a aba Geral-Resumo com caching."""
     try:
         raw_df = load_excel('Geral-Resumo')
-        st.write("Colunas brutas no Excel:", raw_df.columns.tolist())
-        st.write("Tipos de dados brutos:", raw_df.dtypes.to_dict())
         
         df = process_sheet_data(raw_df, 'Geral-Resumo')
         
@@ -17,8 +15,6 @@ def load_and_process_geral_resumo():
         if 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA' in df.columns:
             df['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'] = df['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].str.replace('\n', ' ', regex=False).str.strip()
         
-        st.write("Colunas processadas:", df.columns.tolist())
-        st.write("Tipos de dados processados:", df.dtypes.to_dict())
         
         return df
     except Exception as e:

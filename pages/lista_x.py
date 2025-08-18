@@ -9,8 +9,7 @@ def render_lista_x():
     
     try:
         raw_df = load_excel('Lista X')
-        st.write("Colunas brutas no Excel:", raw_df.columns.tolist())
-        st.write("Tipos de dados brutos:", raw_df.dtypes.to_dict())
+
         
         df = process_sheet_data(raw_df, 'Lista X')
         

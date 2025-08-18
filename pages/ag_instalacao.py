@@ -7,8 +7,6 @@ def load_and_process_ag_instalacao():
     """Carrega e processa a aba Ag_Instalacao com caching."""
     try:
         raw_df = load_excel('Ag_Instalacao')
-        st.write("Colunas brutas no Excel:", raw_df.columns.tolist())
-        st.write("Tipos de dados brutos:", raw_df.dtypes.to_dict())
         
         df = process_sheet_data(raw_df, 'Ag_Instalacao')
         

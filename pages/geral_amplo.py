@@ -26,8 +26,6 @@ def render_geral_amplo():
         missing_columns = [col for col in expected_columns if col not in df.columns]
         if missing_columns:
             st.warning(f"Colunas ausentes na aba 'Geral-Amplo': {', '.join(missing_columns)}")
-            st.write("Colunas disponíveis no DataFrame:", df.columns.tolist())
-            # Adiciona colunas ausentes com valores padrão
             for col in missing_columns:
                 if col in ['DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.', 'DATA DO D.O.', 
                           'DATA DA VISITA TÉCNICA', 'PERÍODO PREVISTO DE TREINAMENTO']:

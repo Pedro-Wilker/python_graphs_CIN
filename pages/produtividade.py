@@ -20,9 +20,6 @@ def load_and_process_produtividade():
         raw_df.columns = raw_df.columns.str.replace('\n', ' ').str.strip().str.replace(r'\s+', ' ', regex=True)
         raw_df.columns = raw_df.columns.str.replace('PREFEITURA DE', 'PREFEITURAS DE')
         
-        st.write("Colunas brutas no Excel:", raw_df.columns.tolist())
-        st.write("Tipos de dados brutos:", raw_df.dtypes.to_dict())
-        
         # Verificar colunas esperadas
         expected_columns = [
             'CIDADE', 'PERÍODO PREVISTO DE TREINAMENTO', 'REALIZOU TREINAMENTO?', 
@@ -32,7 +29,6 @@ def load_and_process_produtividade():
         missing_columns = [col for col in expected_columns if col not in raw_df.columns]
         if missing_columns:
             st.warning(f"Colunas ausentes na aba 'Produtividade': {', '.join(missing_columns)}")
-            st.write("Colunas disponíveis no DataFrame:", raw_df.columns.tolist())
             # Adiciona colunas ausentes com valores padrão
             for col in missing_columns:
                 if col in ['PERÍODO PREVISTO DE TREINAMENTO', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.', 'PREFEITURAS DE']:
@@ -73,10 +69,7 @@ def load_and_process_produtividade():
             df['DATA INÍCIO TREINAMENTO'] = pd.NaT
             df['DATA FIM TREINAMENTO'] = pd.NaT
         
-        # Exibe valores únicos para colunas críticas
-        if 'REALIZOU TREINAMENTO?' in df.columns:
-            st.write("Valores únicos em 'REALIZOU TREINAMENTO?':", df['REALIZOU TREINAMENTO?'].unique().tolist())
-        
+   
         return df
     except Exception as e:
         st.error(f"Erro ao processar a aba Produtividade: {str(e)}")
@@ -468,7 +461,6 @@ def render_produtividade():
             if limit_cities and city_limit != "Sem limite":
                 log_message += f" (limitado a {city_limit})"
             log_message += ": " + str(filtered_df['CIDADE'].tolist())
-            st.write(log_message)
             
             if not filtered_df.empty:
                 compare_date_df = pd.DataFrame()
