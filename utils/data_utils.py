@@ -102,13 +102,14 @@ SHEET_CONFIG = {
         'sheet_name': 'Publicados',
         'columns': {
             'CIDADE': {'type': 'string'},
+            'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
+            'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
             'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado']},
-            'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
-            'REALIZOU TREINAMENTO?': {'type': 'boolean'},
+            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'},
+            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'date', 'format': '%d/%m/%Y'},
             'SITUAÇÃO DO NOVO TERMO DE COOPERAÇÃO': {'type': 'categorical', 'values': ['Publicado D.O.', 'Não Publicado']},
             'DATA DO D.O.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'APTO PARA INSTALAÇÃO?': {'type': 'boolean'},
-            'DATA DA INSTALAÇÃO': {'type': 'date', 'format': '%d/%m/%Y'}
+            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'}
         }
     },
     'Ag_Instalacao': {

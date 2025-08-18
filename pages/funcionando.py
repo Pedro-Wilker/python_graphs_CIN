@@ -1,13 +1,15 @@
 import streamlit as st
 import pandas as pd
-from utils.data_utils import load_excel, parse_training_period, parse_date_columns
+from utils.data_utils import load_excel, process_sheet_data
 
 def render_funcionando():
     st.subheader("Funcionando")
     
     try:
+        # Carrega a aba 'Funcionando'
         df = load_excel('Funcionando')
         
+        # Verifica colunas esperadas
         expected_columns = [
             'CIDADE', 'DATA DE ANÁLISE', 'PARECER DA VISITA TÉCNICA',
             'PERÍODO PREVISTO DE TREINAMENTO', 'SITUAÇÃO DO NOVO TERMO DE COOPERAÇÃO',
@@ -18,12 +20,10 @@ def render_funcionando():
         if missing_columns:
             st.warning(f"Colunas ausentes na aba 'Funcionando': {', '.join(missing_columns)}")
 
-        if 'PERÍODO PREVISTO DE TREINAMENTO' in df.columns:
-            df[['DATA INÍCIO TREINAMENTO', 'DATA FIM TREINAMENTO']] = df['PERÍODO PREVISTO DE TREINAMENTO'].apply(parse_training_period).apply(pd.Series)
-        
-        date_cols = ['DATA DE ANÁLISE', 'DATA DO D.O.', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.']
-        df = parse_date_columns(df, date_cols)
+        # Processa os dados usando process_sheet_data
+        df = process_sheet_data(df, 'Funcionando')
 
+        # Exibe o DataFrame
         st.dataframe(df)
 
     except Exception as e:
