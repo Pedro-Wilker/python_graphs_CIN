@@ -63,8 +63,6 @@ def render_geral_resumo():
         st.write("Valores únicos em 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':", 
                  df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].unique().tolist())
     
-    st.write("Amostra dos dados (primeiras 5 linhas):")
-    st.dataframe(df.head(5), use_container_width=True)
     
     st.markdown("### Tabela Completa <span class='material-icons' style='vertical-align: middle; color: #004aad;'>table</span>")
     st.dataframe(df, use_container_width=True)

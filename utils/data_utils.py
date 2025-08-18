@@ -5,10 +5,11 @@ import numpy as np
 import streamlit as st
 import os
 
-# Caminho do arquivo Excel (usando caminho absoluto temporariamente para teste)
-EXCEL_FILE = r"C:/Users/re049227/Documents/python_graphs_CIN/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
-# Alternativa com caminho relativo (descomente após confirmar a estrutura de diretórios):
-# EXCEL_FILE = os.path.join(os.path.dirname(__file__), "..", "ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx")
+# Caminho padrão do arquivo Excel (relativo ao diretório do projeto)
+EXCEL_FILE = os.path.join(os.path.dirname(__file__), "..", "ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx")
+
+# Caminho alternativo para depuração (diretório correto do projeto)
+FALLBACK_EXCEL_FILE = r"C:/Users/re049227/Documents/python_graphs_CIN/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
 
 # Definição dos tipos de dados esperados para cada aba
 SHEET_CONFIG = {
@@ -235,23 +236,29 @@ SHEET_CONFIG = {
 def load_excel(sheet_name, _file_path=EXCEL_FILE):
     """Carrega uma aba específica do arquivo Excel com caching."""
     try:
-        # Depuração: Exibir diretório de trabalho e caminho absoluto
+        # Depuração: Exibir diretório de trabalho e caminhos testados
         st.write(f"[DEBUG] Diretório de trabalho atual: {os.getcwd()}")
-        st.write(f"[DEBUG] Caminho absoluto do arquivo Excel: {os.path.abspath(_file_path)}")
+        st.write(f"[DEBUG] Tentando caminho principal: {os.path.abspath(_file_path)}")
         
-        # Verificar se o arquivo existe
-        if not os.path.exists(_file_path):
-            st.error(f"Arquivo não encontrado no caminho: {os.path.abspath(_file_path)}")
-            st.markdown("""
-            ### Possíveis Soluções
-            - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\python_graphs_CIN\\`.
-            - Confirme se o nome do arquivo está correto (sem espaços extras ou caracteres ocultos).
-            - Tente usar o caminho absoluto: `C:/Users/re049227/Documents/python_graphs_CIN/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx`.
-            """)
-            return pd.DataFrame()
+        # Verificar se o arquivo existe no caminho principal
+        file_path = _file_path
+        if not os.path.exists(file_path):
+            st.warning(f"Arquivo não encontrado no caminho principal: {os.path.abspath(file_path)}")
+            st.write(f"[DEBUG] Tentando caminho alternativo: {os.path.abspath(FALLBACK_EXCEL_FILE)}")
+            file_path = FALLBACK_EXCEL_FILE
+            if not os.path.exists(file_path):
+                st.error(f"Arquivo não encontrado no caminho alternativo: {os.path.abspath(file_path)}")
+                st.markdown("""
+                ### Possíveis Soluções
+                - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\python_graphs_CIN\\`.
+                - Confirme se o nome do arquivo está correto (sem espaços extras ou caracteres ocultos).
+                - Se o arquivo foi carregado via upload, certifique-se de que o módulo `upload_excel.py` está configurado corretamente.
+                - Em produção, verifique o caminho do arquivo no servidor ou contêiner.
+                """)
+                return pd.DataFrame()
         
         # Carrega todas as colunas disponíveis, sem usar usecols
-        df = pd.read_excel(_file_path, sheet_name=sheet_name, engine='openpyxl')
+        df = pd.read_excel(file_path, sheet_name=sheet_name, engine='openpyxl')
         
         # Normalizar nomes das colunas
         df.columns = df.columns.str.replace('\n', ' ').str.strip().str.replace(r'\s+', ' ', regex=True)
@@ -261,8 +268,6 @@ def load_excel(sheet_name, _file_path=EXCEL_FILE):
         expected_cols = list(SHEET_CONFIG.get(sheet_name, {}).get('columns', {}).keys())
         missing_cols = [col for col in expected_cols if col not in df.columns]
         if missing_cols:
-            st.warning(f"Colunas ausentes na aba '{sheet_name}': {', '.join(missing_cols)}")
-            st.write(f"Colunas disponíveis na aba '{sheet_name}': {df.columns.tolist()}")
             # Adicionar colunas ausentes com valores padrão
             for col in missing_cols:
                 col_type = SHEET_CONFIG.get(sheet_name, {}).get('columns', {}).get(col, {}).get('type', 'string')
@@ -381,11 +386,11 @@ def process_sheet_data(df, sheet_name):
         
         col_type = col_config['type']
         if col_type == 'string':
-            df[col] = df[col].apply(lambda x: str(x) if pd.notnull(x) else '').replace('nan', '').str.replace('\n', ' ', regex=False).str.strip()
+            df[col] = df[col].astype(str).replace('nan', '').str.replace('\n', ' ', regex=False).str.strip()
             # Depuração para PREVISÃO AJUSTE ESTRUTURA P/ VISITA
             if col == 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':
                 unique_values = df[col].unique()
-                if len(unique_values) <= 10:  # Limita para evitar saída longa
+                if len(unique_values) <= 10:
                     st.write(f"[DEBUG] Valores únicos na coluna '{col}' (aba {sheet_name}): {unique_values.tolist()}")
                 else:
                     st.write(f"[DEBUG] Primeiros 10 valores únicos na coluna '{col}' (aba {sheet_name}): {unique_values[:10].tolist()}")
@@ -419,33 +424,42 @@ def process_sheet_data(df, sheet_name):
     return df
 
 @st.cache_data
-def process_excel_file():
+def process_excel_file(uploaded_file=None):
     """Processa todas as abas do arquivo Excel e retorna um dicionário de DataFrames."""
     processed_data = {}
+    file_path = EXCEL_FILE
+    
+    # Se um arquivo foi carregado via upload, usá-lo em vez do caminho padrão
+    if uploaded_file is not None:
+        st.write(f"[DEBUG] Usando arquivo carregado via upload: {uploaded_file.name}")
+        file_path = uploaded_file
+    
     try:
-        # Depuração: Exibir diretório de trabalho e caminho absoluto
-        st.write(f"[DEBUG] Diretório de trabalho atual: {os.getcwd()}")
-        st.write(f"[DEBUG] Caminho absoluto do arquivo Excel: {os.path.abspath(EXCEL_FILE)}")
+       
+        # Verificar se o arquivo existe (se for um caminho de arquivo)
+        if isinstance(file_path, str) and not os.path.exists(file_path):
+            st.warning(f"Arquivo não encontrado no caminho principal: {os.path.abspath(file_path)}")
+            st.write(f"[DEBUG] Tentando caminho alternativo: {os.path.abspath(FALLBACK_EXCEL_FILE)}")
+            file_path = FALLBACK_EXCEL_FILE
+            if not os.path.exists(file_path):
+                st.error(f"Arquivo não encontrado no caminho alternativo: {os.path.abspath(file_path)}")
+                st.markdown("""
+                ### Possíveis Soluções
+                - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\python_graphs_CIN\\`.
+                - Confirme se o nome do arquivo está correto (sem espaços extras ou caracteres ocultos).
+                - Se o arquivo foi carregado via upload, certifique-se de que o módulo `upload_excel.py` está configurado corretamente.
+                - Em produção, verifique o caminho do arquivo no servidor ou contêiner.
+                """)
+                return processed_data
         
-        # Verificar se o arquivo existe
-        if not os.path.exists(EXCEL_FILE):
-            st.error(f"Arquivo não encontrado no caminho: {os.path.abspath(EXCEL_FILE)}")
-            st.markdown("""
-            ### Possíveis Soluções
-            - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\python_graphs_CIN\\`.
-            - Confirme se o nome do arquivo está correto (sem espaços extras ou caracteres ocultos).
-            - Tente usar o caminho absoluto: `C:/Users/re049227/Documents/python_graphs_CIN/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx`.
-            """)
-            return processed_data
-        
-        xls = pd.ExcelFile(EXCEL_FILE, engine='openpyxl')
+        xls = pd.ExcelFile(file_path, engine='openpyxl')
         for sheet_name in SHEET_CONFIG.keys():
             if sheet_name not in xls.sheet_names:
                 st.warning(f"Aba '{sheet_name}' não encontrada no arquivo Excel.")
                 processed_data[sheet_name] = pd.DataFrame()
                 continue
             try:
-                df = load_excel(sheet_name)
+                df = load_excel(sheet_name, file_path)
                 processed_data[sheet_name] = process_sheet_data(df, sheet_name)
             except Exception as e:
                 st.warning(f"Erro ao processar a aba {sheet_name}: {str(e)}")

@@ -40,9 +40,6 @@ def render_ag_instalacao():
         st.write("Valores únicos em 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA':", df['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].unique().tolist())
     if 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA' in df.columns:
         st.write("Valores únicos em 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':", df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].unique().tolist())
-    
-    st.write("Amostra dos dados (primeiras 5 linhas):")
-    st.dataframe(df.head(5), use_container_width=True)
-    
+ 
     st.markdown("### Tabela Completa")
     st.dataframe(df, use_container_width=True)

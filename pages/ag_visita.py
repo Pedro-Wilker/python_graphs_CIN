@@ -52,8 +52,6 @@ def render_ag_visita():
         st.write("Valores únicos em 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':", 
                  df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].unique().tolist())
     
-    st.write("Amostra dos dados (primeiras 5 linhas):")
-    st.dataframe(df.head(5), use_container_width=True)
     
     st.markdown("### Tabela Completa")
     st.dataframe(df, use_container_width=True)

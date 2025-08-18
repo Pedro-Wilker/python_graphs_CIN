@@ -28,9 +28,6 @@ def render_lista_x():
         if 'Parecer da visita técnica' in df.columns:
             st.write("Valores únicos em 'Parecer da visita técnica':", df['Parecer da visita técnica'].unique().tolist())
         
-        st.write("Amostra dos dados (primeiras 5 linhas):")
-        st.dataframe(df.head(5), use_container_width=True)
-        
         st.markdown("### Tabela Completa")
         st.dataframe(df, use_container_width=True)
         
