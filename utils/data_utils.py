@@ -5,8 +5,10 @@ import numpy as np
 import streamlit as st
 import os
 
-# Caminho do arquivo Excel local
-EXCEL_FILE = r"../ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
+# Caminho do arquivo Excel (usando caminho absoluto temporariamente para teste)
+EXCEL_FILE = r"C:/Users/re049227/Documents/python_graphs_CIN/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
+# Alternativa com caminho relativo (descomente após confirmar a estrutura de diretórios):
+# EXCEL_FILE = os.path.join(os.path.dirname(__file__), "..", "ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx")
 
 # Definição dos tipos de dados esperados para cada aba
 SHEET_CONFIG = {
@@ -28,7 +30,7 @@ SHEET_CONFIG = {
             'DATA DO INÍCIO ATEND.': {'type': 'date', 'format': '%d/%m/%Y'},
             'DATA ASSINATURA': {'type': 'date', 'format': '%d/%m/%Y'},
             'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'},
-            'CIDADE': {'type': 'string'}  # Adicionado explicitamente
+            'CIDADE': {'type': 'string'}
         }
     },
     'Lista X': {
@@ -233,6 +235,21 @@ SHEET_CONFIG = {
 def load_excel(sheet_name, _file_path=EXCEL_FILE):
     """Carrega uma aba específica do arquivo Excel com caching."""
     try:
+        # Depuração: Exibir diretório de trabalho e caminho absoluto
+        st.write(f"[DEBUG] Diretório de trabalho atual: {os.getcwd()}")
+        st.write(f"[DEBUG] Caminho absoluto do arquivo Excel: {os.path.abspath(_file_path)}")
+        
+        # Verificar se o arquivo existe
+        if not os.path.exists(_file_path):
+            st.error(f"Arquivo não encontrado no caminho: {os.path.abspath(_file_path)}")
+            st.markdown("""
+            ### Possíveis Soluções
+            - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\python_graphs_CIN\\`.
+            - Confirme se o nome do arquivo está correto (sem espaços extras ou caracteres ocultos).
+            - Tente usar o caminho absoluto: `C:/Users/re049227/Documents/python_graphs_CIN/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx`.
+            """)
+            return pd.DataFrame()
+        
         # Carrega todas as colunas disponíveis, sem usar usecols
         df = pd.read_excel(_file_path, sheet_name=sheet_name, engine='openpyxl')
         
@@ -365,6 +382,13 @@ def process_sheet_data(df, sheet_name):
         col_type = col_config['type']
         if col_type == 'string':
             df[col] = df[col].apply(lambda x: str(x) if pd.notnull(x) else '').replace('nan', '').str.replace('\n', ' ', regex=False).str.strip()
+            # Depuração para PREVISÃO AJUSTE ESTRUTURA P/ VISITA
+            if col == 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':
+                unique_values = df[col].unique()
+                if len(unique_values) <= 10:  # Limita para evitar saída longa
+                    st.write(f"[DEBUG] Valores únicos na coluna '{col}' (aba {sheet_name}): {unique_values.tolist()}")
+                else:
+                    st.write(f"[DEBUG] Primeiros 10 valores únicos na coluna '{col}' (aba {sheet_name}): {unique_values[:10].tolist()}")
         elif col_type == 'categorical':
             allowed_values = col_config.get('values', [])
             df[col] = df[col].apply(lambda x: x if pd.notnull(x) and str(x).strip() in allowed_values else '')
@@ -398,16 +422,34 @@ def process_sheet_data(df, sheet_name):
 def process_excel_file():
     """Processa todas as abas do arquivo Excel e retorna um dicionário de DataFrames."""
     processed_data = {}
-    xls = pd.ExcelFile(EXCEL_FILE, engine='openpyxl')
-    for sheet_name in SHEET_CONFIG.keys():
-        if sheet_name not in xls.sheet_names:
-            st.warning(f"Aba '{sheet_name}' não encontrada no arquivo Excel.")
-            processed_data[sheet_name] = pd.DataFrame()
-            continue
-        try:
-            df = load_excel(sheet_name)
-            processed_data[sheet_name] = process_sheet_data(df, sheet_name)
-        except Exception as e:
-            st.warning(f"Erro ao processar a aba {sheet_name}: {str(e)}")
-            processed_data[sheet_name] = pd.DataFrame()
+    try:
+        # Depuração: Exibir diretório de trabalho e caminho absoluto
+        st.write(f"[DEBUG] Diretório de trabalho atual: {os.getcwd()}")
+        st.write(f"[DEBUG] Caminho absoluto do arquivo Excel: {os.path.abspath(EXCEL_FILE)}")
+        
+        # Verificar se o arquivo existe
+        if not os.path.exists(EXCEL_FILE):
+            st.error(f"Arquivo não encontrado no caminho: {os.path.abspath(EXCEL_FILE)}")
+            st.markdown("""
+            ### Possíveis Soluções
+            - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\python_graphs_CIN\\`.
+            - Confirme se o nome do arquivo está correto (sem espaços extras ou caracteres ocultos).
+            - Tente usar o caminho absoluto: `C:/Users/re049227/Documents/python_graphs_CIN/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx`.
+            """)
+            return processed_data
+        
+        xls = pd.ExcelFile(EXCEL_FILE, engine='openpyxl')
+        for sheet_name in SHEET_CONFIG.keys():
+            if sheet_name not in xls.sheet_names:
+                st.warning(f"Aba '{sheet_name}' não encontrada no arquivo Excel.")
+                processed_data[sheet_name] = pd.DataFrame()
+                continue
+            try:
+                df = load_excel(sheet_name)
+                processed_data[sheet_name] = process_sheet_data(df, sheet_name)
+            except Exception as e:
+                st.warning(f"Erro ao processar a aba {sheet_name}: {str(e)}")
+                processed_data[sheet_name] = pd.DataFrame()
+    except Exception as e:
+        st.error(f"Erro ao abrir o arquivo Excel: {str(e)}")
     return processed_data

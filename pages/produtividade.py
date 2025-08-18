@@ -5,13 +5,29 @@ from datetime import datetime
 import calendar
 import numpy as np
 import re
+import os
 
 @st.cache_data
 def load_and_process_produtividade():
     """Carrega e processa a aba Produtividade com caching."""
     try:
-        # Caminho do arquivo Excel
-        excel_file = "C:/Users/re049227/Documents/pythonGraphs/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
+        # Caminho do arquivo Excel relativo ao diretório do script
+        excel_file = os.path.join(os.path.dirname(__file__), "..", "ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx")
+        
+        # Depuração: Exibir diretório de trabalho e caminho absoluto
+        st.write(f"[DEBUG] Diretório de trabalho atual: {os.getcwd()}")
+        st.write(f"[DEBUG] Caminho absoluto do arquivo Excel: {os.path.abspath(excel_file)}")
+        
+        # Verificar se o arquivo existe
+        if not os.path.exists(excel_file):
+            st.error(f"Arquivo não encontrado no caminho: {os.path.abspath(excel_file)}")
+            st.markdown("""
+            ### Possíveis Soluções
+            - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\pythonGraphs\\`.
+            - Confirme se o nome do arquivo está correto (sem espaços extras ou caracteres ocultos).
+            - Tente usar o caminho absoluto: `C:/Users/re049227/Documents/pythonGraphs/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx`.
+            """)
+            return pd.DataFrame()
         
         # Ler a aba 'Produtividade' diretamente
         raw_df = pd.read_excel(excel_file, sheet_name='Produtividade', engine='openpyxl')
@@ -69,7 +85,6 @@ def load_and_process_produtividade():
             df['DATA INÍCIO TREINAMENTO'] = pd.NaT
             df['DATA FIM TREINAMENTO'] = pd.NaT
         
-   
         return df
     except Exception as e:
         st.error(f"Erro ao processar a aba Produtividade: {str(e)}")

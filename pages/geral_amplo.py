@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 
 def render_geral_amplo():
     st.markdown("""
@@ -7,8 +8,23 @@ def render_geral_amplo():
     """, unsafe_allow_html=True)
     
     try:
-        # Caminho do arquivo Excel
-        excel_file = "C:/Users/re049227/Documents/pythonGraphs/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
+        # Caminho do arquivo Excel relativo ao diretório do script
+        excel_file = os.path.join(os.path.dirname(__file__), "..", "ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx")
+        
+        # Depuração: Exibir diretório de trabalho e caminho absoluto
+        st.write(f"[DEBUG] Diretório de trabalho atual: {os.getcwd()}")
+        st.write(f"[DEBUG] Caminho absoluto do arquivo Excel: {os.path.abspath(excel_file)}")
+        
+        # Verificar se o arquivo existe
+        if not os.path.exists(excel_file):
+            st.error(f"Arquivo não encontrado no caminho: {os.path.abspath(excel_file)}")
+            st.markdown("""
+            ### Possíveis Soluções
+            - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\pythonGraphs\\`.
+            - Confirme se o nome do arquivo está correto (sem espaços extras ou caracteres ocultos).
+            - Tente usar o caminho absoluto: `C:/Users/re049227/Documents/pythonGraphs/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx`.
+            """)
+            return
         
         # Ler a aba 'Geral-Amplo' diretamente
         df = pd.read_excel(excel_file, sheet_name='Geral-Amplo', engine='openpyxl')
@@ -77,4 +93,9 @@ def render_geral_amplo():
         
     except Exception as e:
         st.error(f"Erro ao processar a aba Geral-Amplo: {str(e)}")
-        st.write("Verifique se o arquivo 'ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx' está no diretório correto e contém a aba 'Geral-Amplo' com as colunas esperadas.")
+        st.markdown("""
+        ### Possíveis Soluções
+        - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\pythonGraphs\\`.
+        - Confirme se a aba 'Geral-Amplo' existe no arquivo Excel.
+        - Tente usar o caminho absoluto: `C:/Users/re049227/Documents/pythonGraphs/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx`.
+        """)
