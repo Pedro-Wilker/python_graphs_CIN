@@ -1,6 +1,4 @@
-
-
-	SERVIÇO  		                           |                            ORGAO                     |     TEMPO      | DATA ULTIMA PUBLICACAO
+SERVIÇO | ORGAO | TEMPO | DATA ULTIMA PUBLICACAO
 Solicitar Certificado Dispensa Serviço Alternativo Militar | JSM-PM/MD/CEB (COORDENAÇÃO DO EXERCITO BRASILEIRO)   | 501 | 09 de May de 2025 às 12:10	
 Solicitar Mediante Celebração de Termo de Acordo, a Utilização do Crédito Fiscal por Indústria Integrante do PRODEAGRO | SEFAZ/SGF/DIRAT (DIRETORIA DE ATENDIMENTO) | 613 | 10 de April de 2025 às 10:02
 Marcar Consulta Para Coloproctologista | SESAB/SAIS (SUPERINTENDENCIA DE ATENCAO INTEGRAL A SAUDE) | 724 | 14 de May de 2025 às 17:49

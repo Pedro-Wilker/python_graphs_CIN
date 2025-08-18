@@ -12,7 +12,6 @@ def load_and_process_geral_resumo():
         
         df = process_sheet_data(raw_df, 'Geral-Resumo')
         
-        # Limpeza adicional para colunas específicas
         if 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA' in df.columns:
             df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'] = df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].str.replace('\n', ' ', regex=False).str.strip()
         if 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA' in df.columns:
@@ -27,11 +26,12 @@ def load_and_process_geral_resumo():
         st.stop()
 
 def render_geral_resumo():
-    st.subheader("Geral Resumo", icon=":material/summarize:")
+    st.markdown("""
+        <h3>Geral Resumo <span class="material-icons" style="vertical-align: middle; color: #004aad;">summarize</span></h3>
+    """, unsafe_allow_html=True)
     
     df = load_and_process_geral_resumo()
     
-    # Verificar colunas esperadas
     expected_columns = [
         'CIDADE', 'DATA DE ANÁLISE', 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA',
         'DATA DA VISITA TÉCNICA', 'PARECER DA VISITA TÉCNICA',
@@ -44,7 +44,6 @@ def render_geral_resumo():
     missing_columns = [col for col in expected_columns if col not in df.columns]
     if missing_columns:
         st.warning(f"Colunas ausentes na aba 'Geral-Resumo': {', '.join(missing_columns)}")
-        # Adicionar colunas ausentes com valores padrão
         for col in missing_columns:
             if col in ['DATA DE ANÁLISE', 'DATA DA VISITA TÉCNICA', 'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES',
                        'DATA DO D.O.', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.',
@@ -58,7 +57,6 @@ def render_geral_resumo():
             else:
                 df[col] = ''
     
-    # Exibir valores únicos para colunas críticas
     if 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA' in df.columns:
         st.write("Valores únicos em 'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA':", 
                  df['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].unique().tolist())
@@ -69,10 +67,8 @@ def render_geral_resumo():
         st.write("Valores únicos em 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':", 
                  df['PREVISÃO AJUSTE ESTRUTURA P/ VISITA'].unique().tolist())
     
-    # Exibir amostra dos dados
     st.write("Amostra dos dados (primeiras 5 linhas):")
     st.dataframe(df.head(5), use_container_width=True)
     
-    # Exibir tabela completa
-    st.subheader("Tabela Completa", icon=":material/table:")
+    st.markdown("### Tabela Completa <span class='material-icons' style='vertical-align: middle; color: #004aad;'>table</span>")
     st.dataframe(df, use_container_width=True)

@@ -21,7 +21,9 @@ def load_and_process_ag_info_prefeitura():
         st.stop()
 
 def render_ag_info_prefeitura():
-    st.subheader("Aguardando Informações da Prefeitura", icon=":material/info:")
+    st.markdown("""
+        <h3>Aguardando Informações da Prefeitura <span class="material-icons" style="vertical-align: middle; color: #004aad;">info</span></h3>
+    """, unsafe_allow_html=True)
     
     df = load_and_process_ag_info_prefeitura()
     
@@ -41,5 +43,5 @@ def render_ag_info_prefeitura():
     st.write("Amostra dos dados (primeiras 5 linhas):")
     st.dataframe(df.head(5), use_container_width=True)
     
-    st.subheader("Tabela Completa")
+    st.markdown("### Tabela Completa")
     st.dataframe(df, use_container_width=True)

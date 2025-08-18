@@ -3,7 +3,9 @@ import pandas as pd
 from utils.data_utils import load_excel, process_sheet_data
 
 def render_lista_x():
-    st.subheader("Lista X", icon=":material/list:")
+    st.markdown("""
+        <h3>Lista X <span class="material-icons" style="vertical-align: middle; color: #004aad;">list</span></h3>
+    """, unsafe_allow_html=True)
     
     try:
         raw_df = load_excel('Lista X')
@@ -28,10 +30,10 @@ def render_lista_x():
             st.write("Valores únicos em 'Parecer da visita técnica':", df['Parecer da visita técnica'].unique().tolist())
         
         st.write("Amostra dos dados (primeiras 5 linhas):")
-        st.dataframe(df.head(5))
+        st.dataframe(df.head(5), use_container_width=True)
         
-        st.subheader("Tabela Completa")
-        st.dataframe(df)
+        st.markdown("### Tabela Completa")
+        st.dataframe(df, use_container_width=True)
         
     except Exception as e:
         st.error(f"Erro ao processar a aba Lista X: {str(e)}")

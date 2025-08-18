@@ -1,6 +1,6 @@
-streamlit==1.48.1
 pandas>=2.2.2
 openpyxl>=3.1.2
+streamlit==1.38.0
 pyarrow>=17.0.0
 streamlit-option-menu>=0.3.12
 plotly>=5.22.0

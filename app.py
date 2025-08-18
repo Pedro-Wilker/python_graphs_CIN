@@ -1,13 +1,20 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
+# Configurar o Streamlit para desativar a sidebar multipáginas automática
+st.set_page_config(
+    page_title="Sistema de Acompanhamento do SAC",
+    layout="wide",
+    initial_sidebar_state="collapsed"  # Colapsa a sidebar padrão, mas usaremos a personalizada
+)
+
 # Importações com tratamento de erro
 try:
     from pages import (
         geral_amplo, informacoes, treina_turma, treina_cidade, produtividade,
         ag_info_prefeitura, ag_instalacao, ag_visita, chefes_posto, funcionando,
         geral_resumo, instalados, lista_x, publicados, servicos_a_revisar,
-        upload_excel, visitas_realizadas  # Alterado de visita_realizadas para visitas_realizadas
+        upload_excel, visitas_realizadas
     )
 except ImportError as e:
     st.error(f"Erro ao importar módulos do pacote 'pages': {str(e)}")
@@ -28,7 +35,7 @@ def set_page(page):
         st.session_state['current_page'] = page
         # st.rerun()  # Comentado para evitar recarregamentos
 
-# Sidebar interativa
+# Sidebar interativa (única a ser exibida)
 with st.sidebar:
     page = option_menu(
         "Menu",
@@ -103,7 +110,7 @@ else:
         elif st.session_state['current_page'] == "Upload_Excel":
             upload_excel.render_upload_excel()
         elif st.session_state['current_page'] == "Visita_Realizadas":
-            visitas_realizadas.render_visitas_realizadas()  # Alterado para visitas_realizadas
+            visitas_realizadas.render_visitas_realizadas()
     except Exception as e:
         st.error(f"Erro ao renderizar a página {st.session_state['current_page']}: {str(e)}")
         st.markdown("""

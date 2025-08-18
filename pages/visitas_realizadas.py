@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from utils.data_utils import load_excel, process_sheet_data
 
-def render_visitas_realizadas():  # Função deve ser render_visitas_realizadas
+def render_visitas_realizadas():
     st.markdown("""
         <h3>Visitas Realizadas <span class="material-icons" style="vertical-align: middle; color: #004aad;">check_circle</span></h3>
     """, unsafe_allow_html=True)
