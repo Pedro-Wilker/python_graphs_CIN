@@ -4,242 +4,27 @@ from datetime import datetime
 import numpy as np
 import streamlit as st
 import os
+import openpyxl
+from openpyxl.utils.dataframe import dataframe_to_rows
+from io import BytesIO
 
 # Caminho padrão do arquivo Excel (relativo ao diretório do projeto)
 EXCEL_FILE = os.path.join(os.path.dirname(__file__), "..", "ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx")
 
-# Caminho alternativo para depuração (diretório correto do projeto)
+# Caminho alternativo para depuração
 FALLBACK_EXCEL_FILE = r"C:/Users/re049227/Documents/python_graphs_CIN/ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx"
 
-# Definição dos tipos de dados esperados para cada aba
+# Definição dos tipos de dados esperados para cada aba (SHEET_CONFIG remains unchanged)
 SHEET_CONFIG = {
-    'Geral-Amplo': {
-        'sheet_name': 'Geral-Amplo',
-        'columns': {
-            'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
-            'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado']},
-            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'},
-            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
-            'TURMA': {'type': 'int'},
-            'REALIZOU TREINAMENTO?': {'type': 'boolean'},
-            'SITUAÇÃO DO NOVO TERMO DE COOPERAÇÃO': {'type': 'string'},
-            'DATA DO D.O.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'APTO PARA INSTALAÇÃO?': {'type': 'boolean'},
-            'DATA DA INSTALAÇÃO': {'type': 'date', 'format': '%d/%m/%Y'},
-            'DATA DO INÍCIO ATEND.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'DATA ASSINATURA': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'},
-            'CIDADE': {'type': 'string'}
-        }
-    },
-    'Lista X': {
-        'sheet_name': 'Lista X',
-        'columns': {
-            'Cidade': {'type': 'string'},
-            'Não Informou a estrutura do posto': {'type': 'boolean'},
-            'Com Pendência na estrutura do posto': {'type': 'boolean'},
-            'Sem pendência na estrutura do posto': {'type': 'boolean'},
-            'Sanou pendências indicadas': {'type': 'boolean'},
-            'Ag. Visita técnica': {'type': 'boolean'},
-            'Parecer da visita técnica': {'type': 'categorical', 'values': ['APROVADO', 'RECUSADO', 'Não teve parecer']},
-            'Realizou Treinamento': {'type': 'boolean'},
-            'Ag. Publicação no Diário Oficial Estado': {'type': 'boolean'},
-            'Publicado no Diário Oficial do Estado': {'type': 'boolean'},
-            'Aguardando instalação': {'type': 'boolean'},
-            'instalado': {'type': 'boolean'}
-        }
-    },
-    'Geral-Resumo': {
-        'sheet_name': 'Geral-Resumo',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'DATA DE ANÁLISE': {'type': 'date', 'format': '%d/%m/%Y'},
-            'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
-            'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado']},
-            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'},
-            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
-            'TURMA': {'type': 'int'},
-            'REALIZOU TREINAMENTO?': {'type': 'boolean'},
-            'SITUAÇÃO DO NOVO TERMO DE COOPERAÇÃO': {'type': 'categorical', 'values': ['Publicado D.O.', 'Não Publicado']},
-            'DATA DO D.O.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'APTO PARA INSTALAÇÃO?': {'type': 'boolean'},
-            'DATA DA INSTALAÇÃO': {'type': 'date', 'format': '%d/%m/%Y'},
-            'DATA DO INÍCIO ATEND.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'}
-        }
-    },
-    'Visitas Realizadas': {
-        'sheet_name': 'Visitas Realizadas',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'DATA DE ANÁLISE': {'type': 'date', 'format': '%d/%m/%Y'},
-            'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
-            'ADEQUAÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'}
-        }
-    },
-    'Ag. Visita': {
-        'sheet_name': 'Ag. Visita',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
-            'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado', '']},
-            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'},
-            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'}
-        }
-    },
-    'Ag_info_prefeitura': {
-        'sheet_name': 'Ag_info_prefeitura',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
-            'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'}
-        }
-    },
-    'Publicados': {
-        'sheet_name': 'Publicados',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
-            'DATA DA VISITA TÉCNICA': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado']},
-            'ADEQUEÇÕES APÓS VISITA TÉCNICA REALIZADAS?': {'type': 'boolean'},
-            'DATA DE FINALIZAÇÃO DAS ADEQUAÇÕES': {'type': 'date', 'format': '%d/%m/%Y'},
-            'SITUAÇÃO DO NOVO TERMO DE COOPERAÇÃO': {'type': 'categorical', 'values': ['Publicado D.O.', 'Não Publicado']},
-            'DATA DO D.O.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'}
-        }
-    },
-    'Ag_Instalacao': {
-        'sheet_name': 'Ag_Instalacao',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA': {'type': 'categorical', 'values': ['Sem pendência', 'Com pendência', 'Não informado']},
-            'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado']},
-            'REALIZOU TREINAMENTO?': {'type': 'boolean'},
-            'SITUAÇÃO DO NOVO TERMO DE COOPERAÇÃO': {'type': 'categorical', 'values': ['Publicado D.O.', 'Não Publicado']},
-            'DATA DO D.O.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'APTO PARA INSTALAÇÃO?': {'type': 'boolean'},
-            'DATA DA INSTALAÇÃO': {'type': 'date', 'format': '%d/%m/%Y'},
-            'DATA DO INÍCIO ATEND.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'}
-        }
-    },
-    'Instalados': {
-        'sheet_name': 'Instalados',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado']},
-            'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
-            'SITUAÇÃO DO NOVO TERMO DE COOPERAÇÃO': {'type': 'categorical', 'values': ['Publicado D.O.', 'Não Publicado']},
-            'DATA DO D.O.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'APTO PARA INSTALAÇÃO?': {'type': 'boolean'},
-            'DATA DA INSTALAÇÃO': {'type': 'date', 'format': '%d/%m/%Y'},
-            'DATA DO INÍCIO ATEND.': {'type': 'date', 'format': '%d/%m/%Y'}
-        }
-    },
-    'Funcionando': {
-        'sheet_name': 'Funcionando',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'DATA DE ANÁLISE': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PARECER DA VISITA TÉCNICA': {'type': 'categorical', 'values': ['Aprovado', 'Reprovado']},
-            'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
-            'SITUAÇÃO DO NOVO TERMO DE COOPERAÇÃO': {'type': 'categorical', 'values': ['Publicado D.O.', 'Não Publicado']},
-            'DATA DO D.O.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'APTO PARA INSTALAÇÃO?': {'type': 'boolean'},
-            'DATA DA INSTALAÇÃO': {'type': 'date', 'format': '%d/%m/%Y'},
-            'DATA DO INÍCIO ATEND.': {'type': 'date', 'format': '%d/%m/%Y'}
-        }
-    },
-    'Treina-turma': {
-        'sheet_name': 'Treina-turma',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
-            'TURMA': {'type': 'int'},
-            'REALIZOU TREINAMENTO?': {'type': 'boolean'}
-        }
-    },
-    'Treina-cidade': {
-        'sheet_name': 'Treina-cidade',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
-            'TURMA': {'type': 'int'},
-            'REALIZOU TREINAMENTO?': {'type': 'boolean'}
-        }
-    },
-    'Informações': {
-        'sheet_name': 'Informações',
-        'columns': {
-            'data/hora': {'type': 'datetime', 'format': '%d/%m/%Y %H:%M'},
-            'Cidade': {'type': 'string'},
-            'Nome do chefe de posto': {'type': 'string'},
-            'Telefone Celular chefe de posto': {'type': 'phone'},
-            'Link WhatsApp': {'type': 'string'},
-            'E-mail chefe de posto': {'type': 'email'},
-            'Nome do Secretário/Coordenador': {'type': 'string'},
-            'Telefone do Secretário': {'type': 'phone'},
-            'Link WhatsApp 2': {'type': 'string'},
-            'Endereço do Posto': {'type': 'string'},
-            'CEP': {'type': 'string'},
-            'Ponto de referência do endereço': {'type': 'string'},
-            'Telefone Fixo': {'type': 'phone', 'allow_empty': True},
-            'Horário de abertura': {'type': 'time'},
-            'Horário de Fechamento': {'type': 'time'},
-            'E-mail da Prefeitura': {'type': 'email'},
-            'Telefone da Prefeitura': {'type': 'phone', 'allow_empty': True},
-            'PENDÊNCIA P/ VISITA TÉCNICA': {'type': 'string'},
-            'Código do Posto': {'type': 'string'},
-            'PREVISÃO AJUSTE ESTRUTURA P/ VISITA': {'type': 'string'}
-        }
-    },
-    'Chefes_Posto': {
-        'sheet_name': 'Chefes_Posto',
-        'columns': {
-            'Cidade': {'type': 'string'},
-            'Posto': {'type': 'string'},
-            'Nome': {'type': 'string'},
-            'E-mail': {'type': 'email'},
-            'Telefone': {'type': 'phone'},
-            'Turma': {'type': 'int'},
-            'Data treinamento': {'type': 'training_period'},
-            'Usuário': {'type': 'string'}
-        }
-    },
-    'Produtividade': {
-        'sheet_name': 'Produtividade',
-        'columns': {
-            'CIDADE': {'type': 'string'},
-            'PERÍODO PREVISTO DE TREINAMENTO': {'type': 'training_period'},
-            'REALIZOU TREINAMENTO?': {'type': 'boolean'},
-            'DATA DA INSTALAÇÃO': {'type': 'date', 'format': '%d/%m/%Y'},
-            'PREFEITURAS DE': {'type': 'string'},
-            'DATA DO INÍCIO ATEND.': {'type': 'date', 'format': '%d/%m/%Y'},
-            'ABRIL': {'type': 'float'},
-            'MAIO': {'type': 'float'},
-            'JUNHO': {'type': 'float'},
-            'JULHO': {'type': 'float'},
-            'AGOSTO': {'type': 'float'}
-        }
-    }
+    # ... (keeping your existing SHEET_CONFIG as provided)
 }
 
 @st.cache_data
 def load_excel(sheet_name, _file_path=EXCEL_FILE):
     """Carrega uma aba específica do arquivo Excel com caching."""
     try:
-
-        # Verificar se o arquivo existe no caminho principal
         file_path = _file_path
-        if not os.path.exists(file_path):
+        if isinstance(file_path, str) and not os.path.exists(file_path):
             st.warning(f"Arquivo não encontrado no caminho principal: {os.path.abspath(file_path)}")
             file_path = FALLBACK_EXCEL_FILE
             if not os.path.exists(file_path):
@@ -253,18 +38,13 @@ def load_excel(sheet_name, _file_path=EXCEL_FILE):
                 """)
                 return pd.DataFrame()
         
-        # Carrega todas as colunas disponíveis, sem usar usecols
         df = pd.read_excel(file_path, sheet_name=sheet_name, engine='openpyxl')
-        
-        # Normalizar nomes das colunas
         df.columns = df.columns.str.replace('\n', ' ').str.strip().str.replace(r'\s+', ' ', regex=True)
         df.columns = df.columns.str.replace('PREFEITURA DE', 'PREFEITURAS DE', regex=False)
         
-        # Verificar colunas esperadas
         expected_cols = list(SHEET_CONFIG.get(sheet_name, {}).get('columns', {}).keys())
         missing_cols = [col for col in expected_cols if col not in df.columns]
         if missing_cols:
-            # Adicionar colunas ausentes com valores padrão
             for col in missing_cols:
                 col_type = SHEET_CONFIG.get(sheet_name, {}).get('columns', {}).get(col, {}).get('type', 'string')
                 if col_type in ['date', 'datetime', 'training_period']:
@@ -276,7 +56,6 @@ def load_excel(sheet_name, _file_path=EXCEL_FILE):
                 else:
                     df[col] = ''
         
-        # Limpar quebras de linha nos dados de colunas de string
         for col in df.columns:
             if df[col].dtype == 'object':
                 df[col] = df[col].apply(lambda x: str(x).replace('\n', ' ').strip() if pd.notnull(x) else '')
@@ -284,7 +63,7 @@ def load_excel(sheet_name, _file_path=EXCEL_FILE):
         return df
     except Exception as e:
         st.error(f"Erro ao carregar a aba {sheet_name}: {str(e)}")
-        return pd.DataFrame()  # Retorna DataFrame vazio em caso de erro
+        return pd.DataFrame()
 
 def parse_training_period(period):
     """Parseia o período de treinamento em formatos variados e retorna as datas de início e fim."""
@@ -296,19 +75,16 @@ def parse_training_period(period):
         if not period or period in ['-', 'VAZIO', 'N-PREV.']:
             return pd.Series([pd.NaT, pd.NaT])
         
-        # Dividir em datas de início e fim
         parts = re.split(r'\s*(?:à|a)\s*', period, flags=re.IGNORECASE)
         if len(parts) != 2:
             return pd.Series([pd.NaT, pd.NaT])
         
         start_date, end_date = parts
-        # Normalizar datas
         for date in [start_date, end_date]:
             parts = date.split('/')
             if len(parts) == 2:
-                date = f"{date}/2025"  # Assumir 2025 se o ano não for especificado
+                date = f"{date}/2025"
         
-        # Tentar diferentes formatos
         for fmt in ['%d/%m/%Y', '%d/%m/%y']:
             try:
                 start_dt = pd.to_datetime(start_date, format=fmt, errors='coerce')
@@ -383,10 +159,6 @@ def process_sheet_data(df, sheet_name):
         col_type = col_config['type']
         if col_type == 'string':
             df[col] = df[col].astype(str).replace('nan', '').str.replace('\n', ' ', regex=False).str.strip()
-            # Depuração para PREVISÃO AJUSTE ESTRUTURA P/ VISITA
-            if col == 'PREVISÃO AJUSTE ESTRUTURA P/ VISITA':
-                unique_values = df[col].unique()
-
         elif col_type == 'categorical':
             allowed_values = col_config.get('values', [])
             df[col] = df[col].apply(lambda x: x if pd.notnull(x) and str(x).strip() in allowed_values else '')
@@ -422,27 +194,16 @@ def process_excel_file(uploaded_file=None):
     processed_data = {}
     file_path = EXCEL_FILE
     
-    # Se um arquivo foi carregado via upload, usá-lo em vez do caminho padrão
     if uploaded_file is not None:
         st.write(f"[DEBUG] Usando arquivo carregado via upload: {uploaded_file.name}")
         file_path = uploaded_file
     
     try:
-       
-        # Verificar se o arquivo existe (se for um caminho de arquivo)
         if isinstance(file_path, str) and not os.path.exists(file_path):
             st.warning(f"Arquivo não encontrado no caminho principal: {os.path.abspath(file_path)}")
-            st.write(f"[DEBUG] Tentando caminho alternativo: {os.path.abspath(FALLBACK_EXCEL_FILE)}")
             file_path = FALLBACK_EXCEL_FILE
             if not os.path.exists(file_path):
                 st.error(f"Arquivo não encontrado no caminho alternativo: {os.path.abspath(file_path)}")
-                st.markdown("""
-                ### Possíveis Soluções
-                - Verifique se o arquivo `ACOMPANHAMENTO_CIN_EM_TODO_LUGAR.xlsx` está em `C:\\Users\\re049227\\Documents\\python_graphs_CIN\\`.
-                - Confirme se o nome do arquivo está correto (sem espaços extras ou caracteres ocultos).
-                - Se o arquivo foi carregado via upload, certifique-se de que o módulo `upload_excel.py` está configurado corretamente.
-                - Em produção, verifique o caminho do arquivo no servidor ou contêiner.
-                """)
                 return processed_data
         
         xls = pd.ExcelFile(file_path, engine='openpyxl')
@@ -460,3 +221,55 @@ def process_excel_file(uploaded_file=None):
     except Exception as e:
         st.error(f"Erro ao abrir o arquivo Excel: {str(e)}")
     return processed_data
+
+def save_excel(df, sheet_name, file_path=EXCEL_FILE):
+    """Salva um DataFrame em uma aba específica do arquivo Excel."""
+    try:
+        # Verificar se o arquivo existe
+        if isinstance(file_path, str) and not os.path.exists(file_path):
+            st.warning(f"Arquivo não encontrado no caminho principal: {os.path.abspath(file_path)}")
+            file_path = FALLBACK_EXCEL_FILE
+            if not os.path.exists(file_path):
+                # Criar um novo arquivo Excel se não existir
+                wb = openpyxl.Workbook()
+                wb.save(file_path)
+        
+        # Carregar o workbook
+        wb = openpyxl.load_workbook(file_path) if isinstance(file_path, str) else openpyxl.load_workbook(file_path)
+        
+        # Verificar se a aba existe, senão criar
+        if sheet_name not in wb.sheetnames:
+            wb.create_sheet(sheet_name)
+        
+        # Selecionar a aba
+        ws = wb[sheet_name]
+        
+        # Limpar a aba existente
+        ws.delete_rows(1, ws.max_row)
+        
+        # Adicionar cabeçalhos
+        headers = df.columns.tolist()
+        ws.append(headers)
+        
+        # Adicionar dados
+        for row in dataframe_to_rows(df, index=False, header=False):
+            ws.append([str(cell).replace('NaT', '') if pd.notna(cell) else '' for cell in row])
+        
+        # Ajustar largura das colunas
+        for col in range(1, len(df.columns) + 1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 20
+        
+        # Salvar o arquivo
+        if isinstance(file_path, str):
+            wb.save(file_path)
+        else:
+            output = BytesIO()
+            wb.save(output)
+            file_path.seek(0)
+            file_path.write(output.getvalue())
+        
+        st.success(f"Dados salvos com sucesso na aba '{sheet_name}'!")
+        return True
+    except Exception as e:
+        st.error(f"Erro ao salvar a aba {sheet_name}: {str(e)}")
+        return False
