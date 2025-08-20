@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from utils.data_utils import EXCEL_FILE, load_excel, process_sheet_data, save_excel, SHEET_CONFIG
+import plotly.express as px
 
 @st.cache_data
 def load_and_process_ag_info_prefeitura(_file_path=EXCEL_FILE):
@@ -46,8 +47,8 @@ def render_ag_info_prefeitura(uploaded_file=None):
     st.markdown("### Tabela Completa")
     st.dataframe(df, use_container_width=True)
     
-    # Aba de navegação: Dados
-    tab1 = st.tabs(["Dados"])[0]
+    # Aba de navegação: Dados e Dashboard
+    tab1, tab2 = st.tabs(["Dados", "Dashboard"])
     
     with tab1:
         # Adicionar Novo Registro
@@ -119,3 +120,59 @@ def render_ag_info_prefeitura(uploaded_file=None):
                             st.rerun()
             else:
                 st.warning("Nenhuma linha disponível para editar ou apagar.")
+    
+    with tab2:
+        st.markdown("### Dashboard de Situação da Infra-estrutura")
+        # Seletor para limitar o número de cidades
+        limite_cidades = st.selectbox(
+            "Limitar número de cidades no gráfico",
+            [2, 5, 10, 15, 20, 50, 100, "Sem Limites"],
+            index=7,
+            key="limit_cidades"
+        )
+        
+        # Filtrar o DataFrame com base no limite
+        df_grafico = df.head(limite_cidades) if limite_cidades != "Sem Limites" else df.copy()
+        
+        # Mapear valores para as categorias desejadas
+        valid_categories = ["Sem pendência", "Com Pendência", "Não Informada"]
+        df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'] = df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].apply(
+            lambda x: x if x in valid_categories else "Não Informada"
+        )
+        
+        # Contar cidades por categoria
+        df_counts = df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].value_counts().reset_index()
+        df_counts.columns = ['Situação', 'Contagem']
+        
+        # Garantir que todas as categorias estejam presentes, mesmo com contagem 0
+        for category in valid_categories:
+            if category not in df_counts['Situação'].values:
+                df_counts = pd.concat([df_counts, pd.DataFrame({'Situação': [category], 'Contagem': [0]})], ignore_index=True)
+        
+        # Criar gráfico de pizza
+        if not df_counts.empty and df_counts['Contagem'].sum() > 0:
+            fig = px.pie(
+                df_counts,
+                names='Situação',
+                values='Contagem',
+                title='Distribuição de Cidades por Situação da Infra-estrutura para Visita Técnica',
+                height=400,
+                color='Situação',
+                color_discrete_map={
+                    'Sem pendência': '#00CC96',  # Verde
+                    'Com Pendência': '#EF553B',  # Vermelho
+                    'Não Informada': '#636EFA'   # Azul
+                }
+            )
+            fig.update_traces(
+                textinfo='percent+label',
+                textposition='inside',
+                showlegend=True
+            )
+            fig.update_layout(
+                legend_title_text='Situação',
+                margin=dict(t=50, b=50, l=50, r=50)
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("Nenhum dado disponível para o gráfico de pizza.")
