@@ -14,14 +14,14 @@ try:
         geral_amplo, informacoes, treina_turma, treina_cidade, produtividade,
         ag_info_prefeitura, ag_instalacao, ag_visita, chefes_posto, funcionando,
         geral_resumo, instalados, lista_x, publicados, servicos_a_revisar,
-        upload_excel, visitas_realizadas
+        upload_excel, visitas_realizadas, dashboard_central
     )
 except ImportError as e:
     st.error(f"Erro ao importar módulos do pacote 'pages': {str(e)}")
     st.markdown("""
     ### Possíveis Soluções
     - Verifique se todos os arquivos .py estão presentes em `C:\\Users\\re049227\\Documents\\pythonGraphs\\pages\\`.
-    - Confirme que os nomes dos arquivos correspondem exatamente aos importados (ex.: `visitas_realizadas.py`).
+    - Confirme que os nomes dos arquivos correspondem exatamente aos importados (ex.: `visitas_realizadas.py`, `dashboard_central.py`).
     - Execute `dir C:\\Users\\re049227\\Documents\\pythonGraphs\\pages\\` para listar os arquivos.
     """)
     st.stop()
@@ -43,9 +43,9 @@ with st.sidebar:
             "Home", "Ag_info_prefeitura", "Ag_instalacao", "Ag_visita", "Chefes_Posto",
             "Funcionando", "Geral_Amplo", "Geral_Resumo", "Informações", "Instalados",
             "Lista_X", "Produtividade", "Publicados", "Servicos_a_revisar", "Treina_Cidade",
-            "Treina_Turma", "Upload_Excel", "Visita_Realizadas"
+            "Treina_Turma", "Upload_Excel", "Visita_Realizadas", "Dashboard_Central"
         ],
-        icons=["house"] + ["list-task"] * 17,
+        icons=["house"] + ["list-task"] * 18,
         menu_icon="cast",
         default_index=0,
         key="menu"
@@ -111,6 +111,8 @@ else:
             upload_excel.render_upload_excel()
         elif st.session_state['current_page'] == "Visita_Realizadas":
             visitas_realizadas.render_visitas_realizadas()
+        elif st.session_state['current_page'] == "Dashboard_Central":
+            dashboard_central.render_dashboard_central()
     except Exception as e:
         st.error(f"Erro ao renderizar a página {st.session_state['current_page']}: {str(e)}")
         st.markdown("""

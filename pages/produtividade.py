@@ -12,6 +12,9 @@ def load_and_process_produtividade(_file_path=EXCEL_FILE):
     """Carrega e processa a aba Produtividade com caching."""
     try:
         raw_df = load_excel('Produtividade', _file_path)
+        if raw_df.empty:
+            st.error("Nenhum dado disponível para a aba 'Produtividade'. Verifique o arquivo Excel.")
+            return pd.DataFrame(), []
         
         # Normalizar nomes das colunas
         raw_df.columns = raw_df.columns.str.replace('\n', ' ').str.strip().str.replace(r'\s+', ' ', regex=True)
@@ -23,7 +26,7 @@ def load_and_process_produtividade(_file_path=EXCEL_FILE):
         if missing_columns:
             st.warning(f"Colunas ausentes na aba 'Produtividade': {', '.join(missing_columns)}")
             for col in missing_columns:
-                if col in ['PERÍODO PREVISTO DE TREINAMENTO', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.', 'PREFEITURAS DE']:
+                if col in ['PERÍODO PREVISTO DE TREINAMENTO_INÍCIO', 'PERÍODO PREVISTO DE TREINAMENTO_FIM', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.', 'PREFEITURAS DE']:
                     raw_df[col] = ''
                 elif col == 'REALIZOU TREINAMENTO?':
                     raw_df[col] = False
@@ -32,11 +35,42 @@ def load_and_process_produtividade(_file_path=EXCEL_FILE):
         
         df = process_sheet_data(raw_df, 'Produtividade')
         
+        # Converter colunas de datas
+        date_cols = ['DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.', 'PERÍODO PREVISTO DE TREINAMENTO_INÍCIO', 'PERÍODO PREVISTO DE TREINAMENTO_FIM']
+        for col in date_cols:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], format='%d/%m/%Y', errors='coerce')
+                null_count = df[col].isna().sum()
+                if null_count > 0:
+                    st.warning(f"{null_count} registros na coluna '{col}' estão vazios ou inválidos.")
+        
         # Converter colunas de meses para numérico
         possible_months = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO']
         months = [m for m in possible_months if m in df.columns]
         for month in months:
             df[month] = pd.to_numeric(df[month], errors='coerce').fillna(0.0)
+        
+        # Filtrar linhas válidas
+        df['CIDADE'] = df['CIDADE'].astype(str).str.strip().replace('nan', '')
+        df['PREFEITURAS DE'] = df['PREFEITURAS DE'].astype(str).str.strip().replace('nan', '')
+        df['REALIZOU TREINAMENTO?'] = df['REALIZOU TREINAMENTO?'].apply(lambda x: True if str(x).strip().upper() in ['TRUE', 'SIM', 'X'] else False)
+        df = df[df['CIDADE'].notna() & (df['CIDADE'] != '') & (df['CIDADE'] != 'TOTAL')]
+        df = df[df['PREFEITURAS DE'].notna() & (df['PREFEITURAS DE'] != '')]
+        
+        # Verificar duplicatas
+        duplicate_cities = df[df['CIDADE'].duplicated(keep=False)]['CIDADE'].unique()
+        if len(duplicate_cities) > 0:
+            st.warning(f"Cidades duplicadas encontradas: {duplicate_cities.tolist()}. Agregando dados por cidade.")
+            agg_dict = {month: 'sum' for month in months}
+            agg_dict.update({
+                'REALIZOU TREINAMENTO?': 'first',
+                'DATA DA INSTALAÇÃO': 'min',
+                'DATA DO INÍCIO ATEND.': 'min',
+                'PERÍODO PREVISTO DE TREINAMENTO_INÍCIO': 'min',
+                'PERÍODO PREVISTO DE TREINAMENTO_FIM': 'min',
+                'PREFEITURAS DE': 'first'
+            })
+            df = df.groupby('CIDADE').agg(agg_dict).reset_index()
         
         return df, months
     except Exception as e:
@@ -54,35 +88,6 @@ def render_produtividade(uploaded_file=None):
     if df.empty:
         st.error("Nenhum dado disponível para a aba Produtividade. Verifique o arquivo Excel.")
         return
-    
-    # Filtrar linhas válidas
-    df['CIDADE'] = df['CIDADE'].astype(str).str.strip().replace('nan', '')
-    df['PREFEITURAS DE'] = df['PREFEITURAS DE'].astype(str).str.strip().replace('nan', '')
-    df['REALIZOU TREINAMENTO?'] = df['REALIZOU TREINAMENTO?'].apply(lambda x: True if str(x).strip().upper() in ['TRUE', 'SIM', 'X'] else False)
-    df = df[df['CIDADE'].notna() & (df['CIDADE'] != '') & (df['CIDADE'] != 'TOTAL')]
-    df = df[df['PREFEITURAS DE'].notna() & (df['PREFEITURAS DE'] != '')]
-    
-    duplicate_cities = df[df['CIDADE'].duplicated(keep=False)]['CIDADE'].unique()
-    if len(duplicate_cities) > 0:
-        st.warning(f"Cidades duplicadas encontradas: {duplicate_cities.tolist()}. Agregando dados por cidade.")
-    
-    # Converter colunas de datas
-    date_cols = ['DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.', 'PERÍODO PREVISTO DE TREINAMENTO_INÍCIO', 'PERÍODO PREVISTO DE TREINAMENTO_FIM']
-    for col in date_cols:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], format='%d/%m/%Y', errors='coerce')
-    
-    # Agregar dados por cidade
-    agg_dict = {month: 'sum' for month in months}
-    agg_dict.update({
-        'REALIZOU TREINAMENTO?': 'first',
-        'DATA DA INSTALAÇÃO': 'min',
-        'DATA DO INÍCIO ATEND.': 'min',
-        'PERÍODO PREVISTO DE TREINAMENTO_INÍCIO': 'min',
-        'PERÍODO PREVISTO DE TREINAMENTO_FIM': 'min',
-        'PREFEITURAS DE': 'first'
-    })
-    df = df.groupby('CIDADE').agg(agg_dict).reset_index()
     
     # Aba de navegação
     tab1, tab2, tab3, tab4 = st.tabs(["Dados", "Análise Individual", "Comparação de Cidades", "Comparação por Datas"])
@@ -176,7 +181,6 @@ def render_produtividade(uploaded_file=None):
                 st.warning("Nenhuma linha disponível para editar ou apagar.")
     
     with tab2:
-        # [Existing Análise Individual code, unchanged]
         cities = df['CIDADE'].sort_values().unique().tolist()
         selected_city = st.selectbox("Selecione uma Cidade", [''] + cities, key="city_individual")
         selected_month = st.selectbox("Selecione um Mês para Comparação", [''] + months, key="month_individual")
@@ -277,7 +281,6 @@ def render_produtividade(uploaded_file=None):
                     st.plotly_chart(fig_compare_month, use_container_width=True)
     
     with tab3:
-        # [Existing Comparação de Cidades code, unchanged]
         cities = df['CIDADE'].sort_values().unique().tolist()
         selected_cities = st.multiselect("Selecione Duas ou Mais Cidades para Comparação", cities, key="cities_compare")
         selected_month_comp = st.selectbox("Selecione um Mês para Comparação (Opcional)", [''] + months, key="month_compare")
@@ -364,7 +367,6 @@ def render_produtividade(uploaded_file=None):
                 st.plotly_chart(fig_comp_month, use_container_width=True)
     
     with tab4:
-        # [Corrected Comparação por Datas code]
         st.markdown("<h3>Comparação por Datas</h3>", unsafe_allow_html=True)
         month_to_num = {
             'JANEIRO': 1, 'FEVEREIRO': 2, 'MARÇO': 3, 'ABRIL': 4, 'MAIO': 5, 'JUNHO': 6,
@@ -402,6 +404,7 @@ def render_produtividade(uploaded_file=None):
             month_num_install = month_to_num.get(selected_month_install) if selected_month_install else None
             
             filtered_df = df.copy()
+            # Garantir que apenas linhas com datas válidas sejam usadas
             if filter_type == "Mesmo Dia e Mês de Data de Instalação":
                 filtered_df = filtered_df[filtered_df['DATA DA INSTALAÇÃO'].notna()]
                 if selected_day != 'Qualquer':
@@ -444,6 +447,15 @@ def render_produtividade(uploaded_file=None):
             st.write(log_message)
             
             if not filtered_df.empty:
+                # Criar tabela dinâmica para exibir produção por cidade e mês
+                pivot_table = filtered_df.pivot_table(
+                    values=months,
+                    index='CIDADE',
+                    aggfunc='sum',
+                    fill_value=0
+                )
+                st.dataframe(pivot_table, use_container_width=True)
+                
                 compare_date_df = pd.DataFrame()
                 for city in filtered_df['CIDADE']:
                     city_data = filtered_df[filtered_df['CIDADE'] == city][months].transpose().reset_index()
@@ -452,7 +464,8 @@ def render_produtividade(uploaded_file=None):
                     compare_date_df = pd.concat([compare_date_df, city_data], ignore_index=True)
                 
                 fig_date_bar = px.bar(compare_date_df, x='Mês', y='Produção', color='Cidade', barmode='group',
-                                      title=f'Produção Mês a Mês - Comparação por {filter_type}')
+                                      title=f'Produção Mês a Mês - Comparação por {filter_type}',
+                                      color_discrete_sequence=px.colors.qualitative.Plotly)
                 fig_date_bar.update_traces(texttemplate='%{y}', textposition='outside')
                 st.plotly_chart(fig_date_bar, use_container_width=True)
                 
@@ -471,4 +484,6 @@ def render_produtividade(uploaded_file=None):
                 st.warning(warning_message)
         except Exception as e:
             st.error(f"Erro ao processar a comparação por datas: {str(e)}")
-            return
+
+if __name__ == "__main__":
+    render_produtividade()
