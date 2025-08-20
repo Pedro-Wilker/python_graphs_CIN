@@ -220,9 +220,9 @@ def render_ag_instalacao(uploaded_file=None):
         
         # Gráfico 1: SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA
         st.markdown("#### Distribuição de Cidades por Situação da Infra-estrutura")
-        valid_categories = ["Sem pendência", "Com Pendência", "Não Informada"]
+        valid_categories = SHEET_CONFIG['Ag_Instalacao']['columns']['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA']['values'] + ["Não Informada"]
         df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'] = df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].apply(
-            lambda x: x if x in valid_categories else "Não Informada"
+            lambda x: x if x in SHEET_CONFIG['Ag_Instalacao']['columns']['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA']['values'] else "Não Informada"
         )
         df_counts_infra = df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].value_counts().reset_index()
         df_counts_infra.columns = ['Situação', 'Contagem']
@@ -249,48 +249,6 @@ def render_ag_instalacao(uploaded_file=None):
             st.plotly_chart(fig_infra, use_container_width=True)
         else:
             st.warning("Nenhum dado disponível para o gráfico de situação da infra-estrutura.")
-        
-        # Relatório de Datas
-        st.markdown("#### Relatório de Datas por Cidade")
-        df_relatorio = df_grafico[['CIDADE', 'DATA DO D.O.', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.']].copy()
-        df_relatorio['DO para Instalação (Dias)'] = 0
-        df_relatorio['Instalação para Atendimento (Dias)'] = 0
-        df_relatorio['DO para Atendimento (Dias)'] = 0
-        
-        for idx, row in df_relatorio.iterrows():
-            try:
-                data_do = pd.to_datetime(row['DATA DO D.O.'], format='%d/%m/%Y', errors='coerce')
-                data_instalacao = pd.to_datetime(row['DATA DA INSTALAÇÃO'], format='%d/%m/%Y', errors='coerce')
-                data_inicio_atend = pd.to_datetime(row['DATA DO INÍCIO ATEND.'], format='%d/%m/%Y', errors='coerce')
-                
-                if pd.notna(data_do) and pd.notna(data_instalacao):
-                    df_relatorio.at[idx, 'DO para Instalação (Dias)'] = (data_instalacao - data_do).days
-                if pd.notna(data_instalacao) and pd.notna(data_inicio_atend):
-                    df_relatorio.at[idx, 'Instalação para Atendimento (Dias)'] = (data_inicio_atend - data_instalacao).days
-                if pd.notna(data_do) and pd.notna(data_inicio_atend):
-                    df_relatorio.at[idx, 'DO para Atendimento (Dias)'] = (data_inicio_atend - data_do).days
-            except Exception as e:
-                st.warning(f"Erro ao calcular tempos para a cidade {row['CIDADE']}: {str(e)}")
-        
-        # Estilizar o DataFrame
-        def style_dataframe(df):
-            return df.style.set_table_styles([
-                {'selector': 'th', 'props': [('background-color', '#4F81BD'), ('color', 'white'), ('font-weight', 'bold'), ('text-align', 'center'), ('padding', '8px')]},
-                {'selector': 'td', 'props': [('border', '1px solid #ddd'), ('padding', '8px'), ('text-align', 'center')]},
-                {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f2f2f2')]},
-                {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
-            ]).set_properties(**{'font-size': '14px'})
-        
-        st.dataframe(style_dataframe(df_relatorio), use_container_width=True)
-        
-        # Botão para exportar o relatório como Excel
-        excel_data = to_excel(df_relatorio)
-        st.download_button(
-            label="Exportar Relatório como Excel",
-            data=excel_data,
-            file_name="relatorio_datas_instalacao.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
         
         # Gráfico 2: PARECER DA VISITA TÉCNICA
         st.markdown("#### Distribuição de Cidades por Parecer da Visita Técnica")
@@ -343,3 +301,45 @@ def render_ag_instalacao(uploaded_file=None):
             st.plotly_chart(fig_treinamento, use_container_width=True)
         else:
             st.warning("Nenhum dado disponível para o gráfico de treinamento.")
+        
+        # Relatório de Datas
+        st.markdown("#### Relatório de Datas por Cidade")
+        df_relatorio = df_grafico[['CIDADE', 'DATA DO D.O.', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.']].copy()
+        df_relatorio['DO para Instalação (Dias)'] = 0
+        df_relatorio['Instalação para Atendimento (Dias)'] = 0
+        df_relatorio['DO para Atendimento (Dias)'] = 0
+        
+        for idx, row in df_relatorio.iterrows():
+            try:
+                data_do = pd.to_datetime(row['DATA DO D.O.'], format='%d/%m/%Y', errors='coerce')
+                data_instalacao = pd.to_datetime(row['DATA DA INSTALAÇÃO'], format='%d/%m/%Y', errors='coerce')
+                data_inicio_atend = pd.to_datetime(row['DATA DO INÍCIO ATEND.'], format='%d/%m/%Y', errors='coerce')
+                
+                if pd.notna(data_do) and pd.notna(data_instalacao):
+                    df_relatorio.at[idx, 'DO para Instalação (Dias)'] = (data_instalacao - data_do).days
+                if pd.notna(data_instalacao) and pd.notna(data_inicio_atend):
+                    df_relatorio.at[idx, 'Instalação para Atendimento (Dias)'] = (data_inicio_atend - data_instalacao).days
+                if pd.notna(data_do) and pd.notna(data_inicio_atend):
+                    df_relatorio.at[idx, 'DO para Atendimento (Dias)'] = (data_inicio_atend - data_do).days
+            except Exception as e:
+                st.warning(f"Erro ao calcular tempos para a cidade {row['CIDADE']}: {str(e)}")
+        
+        # Estilizar o DataFrame
+        def style_dataframe(df):
+            return df.style.set_table_styles([
+                {'selector': 'th', 'props': [('background-color', '#4F81BD'), ('color', 'white'), ('font-weight', 'bold'), ('text-align', 'center'), ('padding', '8px')]},
+                {'selector': 'td', 'props': [('border', '1px solid #ddd'), ('padding', '8px'), ('text-align', 'center')]},
+                {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f2f2f2')]},
+                {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
+            ]).set_properties(**{'font-size': '14px'})
+        
+        st.dataframe(style_dataframe(df_relatorio), use_container_width=True)
+        
+        # Botão para exportar o relatório como Excel
+        excel_data = to_excel(df_relatorio)
+        st.download_button(
+            label="Exportar Relatório como Excel",
+            data=excel_data,
+            file_name="relatorio_datas_instalacao.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
