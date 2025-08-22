@@ -1,5 +1,6 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
+from utils import dashboard_utils
 
 # Configurar o Streamlit para desativar a sidebar multipáginas automática
 st.set_page_config(
@@ -14,14 +15,14 @@ try:
         geral_amplo, informacoes, treina_turma, treina_cidade, produtividade,
         ag_info_prefeitura, ag_instalacao, ag_visita, chefes_posto, funcionando,
         geral_resumo, instalados, lista_x, publicados, servicos_a_revisar,
-        upload_excel, visitas_realizadas, dashboard_central
+        upload_excel, visitas_realizadas
     )
 except ImportError as e:
-    st.error(f"Erro ao importar módulos do pacote 'pages': {str(e)}")
+    st.error(f" AscError ao importar módulos do pacote 'pages': {str(e)}")
     st.markdown("""
     ### Possíveis Soluções
     - Verifique se todos os arquivos .py estão presentes em `C:\\Users\\re049227\\Documents\\pythonGraphs\\pages\\`.
-    - Confirme que os nomes dos arquivos correspondem exatamente aos importados (ex.: `visitas_realizadas.py`, `dashboard_central.py`).
+    - Confirme que os nomes dos arquivos correspondem exatamente aos importados (ex.: `visitas_realizadas.py`, `dashboard_utils.py`).
     - Execute `dir C:\\Users\\re049227\\Documents\\pythonGraphs\\pages\\` para listar os arquivos.
     """)
     st.stop()
@@ -112,7 +113,7 @@ else:
         elif st.session_state['current_page'] == "Visita_Realizadas":
             visitas_realizadas.render_visitas_realizadas()
         elif st.session_state['current_page'] == "Dashboard_Central":
-            dashboard_central.render_dashboard_central()
+            dashboard_utils.render_dashboard_utils()  # Atualizado para refletir o novo nome da função
     except Exception as e:
         st.error(f"Erro ao renderizar a página {st.session_state['current_page']}: {str(e)}")
         st.markdown("""
