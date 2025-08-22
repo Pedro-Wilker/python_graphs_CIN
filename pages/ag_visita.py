@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
-from utils.dashboard_utils import generate_ag_visita_dashboards
+import plotly.express as px
+from python_graphs_CIN.utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
 
 @st.cache_data
 def load_and_process_ag_visita(_file_path=EXCEL_FILE):
@@ -13,24 +13,70 @@ def load_and_process_ag_visita(_file_path=EXCEL_FILE):
             st.error("Nenhum dado disponível para a aba 'Ag. Visita'. Verifique o nome da aba no arquivo Excel.")
             return pd.DataFrame()
         
-        # Verificar colunas esperadas
-        expected_columns = list(SHEET_CONFIG['Ag. Visita']['columns'].keys())
-        missing_columns = [col for col in expected_columns if col not in raw_df.columns]
-        if missing_columns:
-            for col in missing_columns:
-                col_type = SHEET_CONFIG['Ag. Visita']['columns'][col].get('type', 'string')
-                if col_type == 'date':
-                    raw_df[col] = pd.NaT
-                elif col_type == 'categorical':
-                    raw_df[col] = ''  # Default to empty string for categorical
-                else:
-                    raw_df[col] = ''
-        
         df = process_sheet_data(raw_df, 'Ag. Visita')
         return df
     except Exception as e:
         st.error(f"Erro ao processar a aba Ag. Visita: {str(e)}")
         return pd.DataFrame()
+
+def generate_ag_visita_dashboards(df, limite_cidades="Sem Limites"):
+    """Gera gráficos para a aba 'Ag. Visita'."""
+    if df.empty:
+        return []
+    
+    df_plot = df.head(limite_cidades) if isinstance(limite_cidades, int) else df
+    figs = []
+    
+    # Gráfico 1: Distribuição por Situação da Infra-estrutura
+    sit_infra_counts = df_plot['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].value_counts().reset_index()
+    sit_infra_counts.columns = ['Situação', 'Quantidade']
+    fig1 = px.pie(
+        sit_infra_counts,
+        values='Quantidade',
+        names='Situação',
+        title='Distribuição por Situação da Infra-estrutura',
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig1.update_traces(textinfo='percent+label')
+    figs.append(fig1)
+    
+    # Gráfico 2: Distribuição por Parecer da Visita Técnica
+    parecer_counts = df_plot['PARECER DA VISITA TÉCNICA'].value_counts().reset_index()
+    parecer_counts.columns = ['Parecer', 'Quantidade']
+    fig2 = px.bar(
+        parecer_counts,
+        x='Parecer',
+        y='Quantidade',
+        title='Distribuição por Parecer da Visita Técnica',
+        text='Quantidade',
+        color='Parecer',
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig2.update_traces(textposition='outside')
+    fig2.update_layout(showlegend=False)
+    figs.append(fig2)
+    
+    # Gráfico 3: Visitas por Data
+    df_data = df_plot[df_plot['DATA DA VISITA TÉCNICA'].notna() & (df_plot['DATA DA VISITA TÉCNICA'] != '')]
+    if not df_data.empty:
+        df_data['DATA'] = pd.to_datetime(df_data['DATA DA VISITA TÉCNICA'], format='%d/%m/%Y', errors='coerce')
+        df_data = df_data[df_data['DATA'].notna()]
+        df_data['Mês-Ano'] = df_data['DATA'].dt.strftime('%Y-%m')
+        data_counts = df_data['Mês-Ano'].value_counts().sort_index().reset_index()
+        data_counts.columns = ['Mês-Ano', 'Quantidade']
+        fig3 = px.line(
+            data_counts,
+            x='Mês-Ano',
+            y='Quantidade',
+            title='Visitas Técnicas por Mês',
+            markers=True,
+            text='Quantidade'
+        )
+        fig3.update_traces(mode='lines+markers+text', textposition='top center')
+        fig3.update_layout(xaxis_title="Mês-Ano", yaxis_title="Número de Visitas")
+        figs.append(fig3)
+    
+    return figs
 
 def render_ag_visita(uploaded_file=None):
     st.markdown("""
@@ -47,11 +93,9 @@ def render_ag_visita(uploaded_file=None):
     st.markdown("### Tabela Completa")
     st.dataframe(df, use_container_width=True)
     
-    # Aba de navegação: Dados e Dashboard
     tab1, tab2 = st.tabs(["Dados", "Dashboard"])
     
     with tab1:
-        # Adicionar Novo Registro
         with st.expander("Adicionar Novo Registro"):
             cidade = st.text_input("Cidade", key="new_cidade")
             sit_infra = st.selectbox(
@@ -94,7 +138,6 @@ def render_ag_visita(uploaded_file=None):
                 else:
                     st.error("Cidade é obrigatória.")
         
-        # Editar ou Apagar Registro
         with st.expander("Editar ou Apagar Registro"):
             if not df.empty:
                 idx = st.selectbox("Selecione uma linha", df.index, key="edit_idx")
@@ -158,7 +201,6 @@ def render_ag_visita(uploaded_file=None):
     with tab2:
         st.markdown("### Dashboard de Aguardando Visita Técnica")
         
-        # Seletor para limitar o número de cidades
         limite_cidades = st.selectbox(
             "Limitar número de cidades no dashboard",
             [2, 5, 10, 15, 20, 50, 100, "Sem Limites"],
@@ -169,3 +211,6 @@ def render_ag_visita(uploaded_file=None):
         figs = generate_ag_visita_dashboards(df, limite_cidades)
         for fig in figs:
             st.plotly_chart(fig, use_container_width=True)
+
+if __name__ == "__main__":
+    render_ag_visita()

@@ -1,0 +1,11 @@
+{
+    "python.analysis.extraPaths": [
+        "./python_graphs_CIN",
+        "./python_graphs_CIN/pages",
+        "./python_graphs_CIN/utils"
+    ],
+    "python.pythonPath": ".venv\\Scripts\\python.exe",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "warning"
+    }
+}

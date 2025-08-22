@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
-from utils.dashboard_utils import generate_ag_instalacao_dashboards
 from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils.dataframe import dataframe_to_rows
+import plotly.express as px
+from python_graphs_CIN.utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
 
 @st.cache_data
 def load_and_process_ag_instalacao(_file_path=EXCEL_FILE):
@@ -16,21 +16,6 @@ def load_and_process_ag_instalacao(_file_path=EXCEL_FILE):
         if raw_df.empty:
             st.error("Nenhum dado disponível para a aba 'Ag_Instalacao'. Verifique o nome da aba no arquivo Excel.")
             return pd.DataFrame()
-        
-        # Verificar colunas esperadas
-        expected_columns = list(SHEET_CONFIG['Ag_Instalacao']['columns'].keys())
-        missing_columns = [col for col in expected_columns if col not in raw_df.columns]
-        if missing_columns:
-            for col in missing_columns:
-                col_type = SHEET_CONFIG['Ag_Instalacao']['columns'][col].get('type', 'string')
-                if col_type == 'date':
-                    raw_df[col] = pd.NaT
-                elif col_type == 'categorical':
-                    raw_df[col] = ''
-                elif col_type == 'boolean':
-                    raw_df[col] = False
-                else:
-                    raw_df[col] = ''
         
         df = process_sheet_data(raw_df, 'Ag_Instalacao')
         return df
@@ -59,6 +44,69 @@ def to_excel(df):
 
     workbook.save(output)
     return output.getvalue()
+
+def generate_ag_instalacao_dashboards(df, limite_cidades="Sem Limites"):
+    """Gera gráficos e relatório para a aba 'Ag_Instalacao'."""
+    if df.empty:
+        return [], pd.DataFrame()
+    
+    # Aplicar limite ao número de cidades, se necessário
+    df_plot = df.head(limite_cidades) if isinstance(limite_cidades, int) else df
+    
+    figs = []
+    
+    # Gráfico 1: Distribuição por Situação da Infra-estrutura
+    sit_infra_counts = df_plot['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].value_counts().reset_index()
+    sit_infra_counts.columns = ['Situação', 'Quantidade']
+    fig1 = px.pie(
+        sit_infra_counts,
+        values='Quantidade',
+        names='Situação',
+        title='Distribuição por Situação da Infra-estrutura',
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig1.update_traces(textinfo='percent+label')
+    figs.append(fig1)
+    
+    # Gráfico 2: Distribuição por Parecer da Visita Técnica
+    parecer_counts = df_plot['PARECER DA VISITA TÉCNICA'].value_counts().reset_index()
+    parecer_counts.columns = ['Parecer', 'Quantidade']
+    fig2 = px.bar(
+        parecer_counts,
+        x='Parecer',
+        y='Quantidade',
+        title='Distribuição por Parecer da Visita Técnica',
+        text='Quantidade',
+        color='Parecer',
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig2.update_traces(textposition='outside')
+    fig2.update_layout(showlegend=False)
+    figs.append(fig2)
+    
+    # Gráfico 3: Status do Termo de Cooperação
+    termo_counts = df_plot['SITUAÇÃO DO NOVO TERMO DE COOPERAÇÃO'].value_counts().reset_index()
+    termo_counts.columns = ['Situação', 'Quantidade']
+    fig3 = px.bar(
+        termo_counts,
+        x='Situação',
+        y='Quantidade',
+        title='Distribuição por Situação do Termo de Cooperação',
+        text='Quantidade',
+        color='Situação',
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig3.update_traces(textposition='outside')
+    fig3.update_layout(showlegend=False)
+    figs.append(fig3)
+    
+    # Relatório de datas
+    df_relatorio = df_plot[['CIDADE', 'DATA DO D.O.', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.']].copy()
+    df_relatorio['DATA DO D.O.'] = pd.to_datetime(df_relatorio['DATA DO D.O.'], format='%d/%m/%Y', errors='coerce')
+    df_relatorio['DATA DA INSTALAÇÃO'] = pd.to_datetime(df_relatorio['DATA DA INSTALAÇÃO'], format='%d/%m/%Y', errors='coerce')
+    df_relatorio['DATA DO INÍCIO ATEND.'] = pd.to_datetime(df_relatorio['DATA DO INÍCIO ATEND.'], format='%d/%m/%Y', errors='coerce')
+    
+    return figs, df_relatorio
 
 def render_ag_instalacao(uploaded_file=None):
     st.markdown("""
@@ -207,7 +255,6 @@ def render_ag_instalacao(uploaded_file=None):
     with tab2:
         st.markdown("### Dashboard de Aguardando Instalação")
         
-        # Seletor para limitar o número de cidades
         limite_cidades = st.selectbox(
             "Limitar número de cidades no dashboard",
             [2, 5, 10, 15, 20, 50, 100, "Sem Limites"],
@@ -219,21 +266,17 @@ def render_ag_instalacao(uploaded_file=None):
         for fig in figs:
             st.plotly_chart(fig, use_container_width=True)
         
-        # Relatório de Datas
         st.markdown("#### Relatório de Datas por Cidade")
+        if not df_relatorio.empty:
+            def style_dataframe(df):
+                return df.style.set_table_styles([
+                    {'selector': 'th', 'props': [('background-color', '#4F81BD'), ('color', 'white'), ('font-weight', 'bold'), ('text-align', 'center'), ('padding', '8px')]},
+                    {'selector': 'td', 'props': [('border', '1px solid #ddd'), ('padding', '8px'), ('text-align', 'center')]},
+                    {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f2f2f2')]},
+                    {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
+                ]).set_properties(**{'font-size': '14px'})
+            st.dataframe(style_dataframe(df_relatorio), use_container_width=True)
         
-        # Estilizar o DataFrame
-        def style_dataframe(df):
-            return df.style.set_table_styles([
-                {'selector': 'th', 'props': [('background-color', '#4F81BD'), ('color', 'white'), ('font-weight', 'bold'), ('text-align', 'center'), ('padding', '8px')]},
-                {'selector': 'td', 'props': [('border', '1px solid #ddd'), ('padding', '8px'), ('text-align', 'center')]},
-                {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f2f2f2')]},
-                {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
-            ]).set_properties(**{'font-size': '14px'})
-        
-        st.dataframe(style_dataframe(df_relatorio), use_container_width=True)
-        
-        # Botão para exportar o relatório como Excel
         excel_data = to_excel(df_relatorio)
         st.download_button(
             label="Exportar Relatório como Excel",
@@ -241,3 +284,6 @@ def render_ag_instalacao(uploaded_file=None):
             file_name="relatorio_datas_instalacao.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
+if __name__ == "__main__":
+    render_ag_instalacao()

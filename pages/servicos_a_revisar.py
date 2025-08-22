@@ -9,24 +9,21 @@ from openpyxl.styles import Font, PatternFill
 from openpyxl.utils.dataframe import dataframe_to_rows
 import plotly.express as px
 import plotly.graph_objects as go
-from utils.dashboard_utils import generate_servicos_a_revisar_dashboards
+from python_graphs_CIN.utils.data_utils import EXCEL_FILE, load_excel, process_sheet_data, save_excel, SHEET_CONFIG
 
 ARQUIVO = os.path.join(os.path.dirname(__file__), '..', 'revisarservicos.txt')
 
 def parse_data_linha(linha):
     try:
-        # Ignorar a linha de cabeçalho
         if linha.strip().lower().startswith('serviço | orgao | tempo | data ultima publicacao'):
             return None
 
         partes = [p.strip() for p in linha.split('|')]
-        # Inicializar valores padrão
         servico = ''
         orgao = ''
         tempo = 0
         data_formatada = ''
 
-        # Atribuir valores com base no número de partes
         if len(partes) >= 1:
             servico = partes[0] if partes[0] else ''
         if len(partes) >= 2:
@@ -45,7 +42,6 @@ def parse_data_linha(linha):
                 pass
         if len(partes) >= 4 and partes[3]:
             data_raw = partes[3]
-            # Tentar o formato principal: "dd de mês de aaaa" com horário opcional
             match = re.match(r'(\d{1,2})\s*de\s*(\w+)\s*(?:de\s*)?(\d{4})(?:\s*às\s*(\d{2}:\d{2}))?', data_raw, re.IGNORECASE)
             if match:
                 groups = match.groups()
@@ -64,7 +60,6 @@ def parse_data_linha(linha):
                 mes_num = meses.get(mes.lower(), '01')
                 data_formatada = f"{dia.zfill(2)}/{mes_num}/{ano}" + (f" {hora}" if hora else "")
             else:
-                # Fallback para outros formatos
                 for fmt in ['%d/%m/%Y', '%d-%m-%Y', '%d/%m/%y', '%d-%m-%y', '%Y-%m-%d']:
                     try:
                         data_dt = pd.to_datetime(data_raw, format=fmt, errors='coerce')
@@ -81,7 +76,7 @@ def parse_data_linha(linha):
             'SERVIÇO': servico,
             'ORGAO': orgao,
             'TEMPO': tempo,
-            'DATA ULTIMA PUBLICACAO': data_formatada
+            'DATA ULTIMA PUBLICAÇÃO': data_formatada
         }
     except Exception as e:
         st.error(f"Erro ao processar linha: {linha}. Detalhes: {str(e)}")
@@ -108,7 +103,7 @@ def carregar_dados():
 def atualizar_tempo(df):
     hoje = datetime.datetime.now()
     for idx, row in df.iterrows():
-        data_str = row['DATA ULTIMA PUBLICACAO']
+        data_str = row['DATA ULTIMA PUBLICAÇÃO']
         if data_str and data_str.strip():
             try:
                 for fmt in ['%d/%m/%Y %H:%M', '%d/%m/%Y']:
@@ -133,7 +128,7 @@ def salvar_dados(df):
     with open(ARQUIVO, 'w', encoding='utf-8') as f:
         f.write('SERVIÇO | ORGAO | TEMPO | DATA ULTIMA PUBLICACAO\n')
         for _, row in df.iterrows():
-            data_str = row['DATA ULTIMA PUBLICACAO'] if row['DATA ULTIMA PUBLICACAO'] else ''
+            data_str = row['DATA ULTIMA PUBLICAÇÃO'] if row['DATA ULTIMA PUBLICAÇÃO'] else ''
             f.write(f"{row['SERVIÇO']} | {row['ORGAO']} | {row['TEMPO']} | {data_str}\n")
 
 def to_excel(df):
@@ -157,6 +152,62 @@ def to_excel(df):
     workbook.save(output)
     return output.getvalue()
 
+def generate_servicos_a_revisar_dashboards(df, limite_grafico="Sem Limites"):
+    """Gera gráficos para a aba 'Serviços a Revisar'."""
+    if df.empty:
+        return []
+    
+    df_plot = df.head(limite_grafico) if isinstance(limite_grafico, int) else df
+    figs = []
+    
+    orgao_counts = df_plot['ORGAO'].value_counts().reset_index()
+    orgao_counts.columns = ['Órgão', 'Quantidade']
+    fig1 = px.bar(
+        orgao_counts,
+        x='Órgão',
+        y='Quantidade',
+        title='Distribuição de Serviços por Órgão',
+        text='Quantidade',
+        color='Órgão',
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig1.update_traces(textposition='outside')
+    fig1.update_layout(showlegend=False, xaxis_title="Órgão", yaxis_title="Número de Serviços")
+    figs.append(fig1)
+    
+    df_tempo = df_plot[df_plot['TEMPO'] > 0]
+    if not df_tempo.empty:
+        fig2 = px.histogram(
+            df_tempo,
+            x='TEMPO',
+            title='Distribuição do Tempo desde a Última Publicação (Dias)',
+            nbins=20,
+            color_discrete_sequence=['#4F81BD']
+        )
+        fig2.update_layout(xaxis_title="Dias desde a Última Publicação", yaxis_title="Contagem")
+        figs.append(fig2)
+    
+    df_data = df_plot[df_plot['DATA ULTIMA PUBLICAÇÃO'].notna() & (df_plot['DATA ULTIMA PUBLICAÇÃO'] != '')]
+    if not df_data.empty:
+        df_data['DATA'] = pd.to_datetime(df_data['DATA ULTIMA PUBLICAÇÃO'], format='%d/%m/%Y', errors='coerce')
+        df_data = df_data[df_data['DATA'].notna()]
+        df_data['Mês-Ano'] = df_data['DATA'].dt.strftime('%Y-%m')
+        data_counts = df_data['Mês-Ano'].value_counts().sort_index().reset_index()
+        data_counts.columns = ['Mês-Ano', 'Quantidade']
+        fig3 = px.line(
+            data_counts,
+            x='Mês-Ano',
+            y='Quantidade',
+            title='Serviços por Mês de Última Publicação',
+            markers=True,
+            text='Quantidade'
+        )
+        fig3.update_traces(mode='lines+markers+text', textposition='top center')
+        fig3.update_layout(xaxis_title="Mês-Ano", yaxis_title="Número de Serviços")
+        figs.append(fig3)
+    
+    return figs
+
 def render_servicos_a_revisar():
     st.markdown("""
         <h3>Serviços a Revisar <span class="material-icons" style="vertical-align: middle; color: #004aad;">checklist</span></h3>
@@ -174,8 +225,6 @@ def render_servicos_a_revisar():
         return
     
     df = atualizar_tempo(df)
-
-    # Aba de navegação: Dados e Dashboard
     tab1, tab2 = st.tabs(["Dados", "Dashboard"])
 
     with tab1:
@@ -200,7 +249,7 @@ def render_servicos_a_revisar():
             if st.button("Adicionar Serviço", key="add_button"):
                 if servico and orgao:
                     nova_data = f"{data_pub.strftime('%d/%m/%Y') if data_pub else ''} {hora_pub.strftime('%H:%M') if hora_pub else ''}".strip() if data_pub and hora_pub else ''
-                    novo = {'SERVIÇO': servico, 'ORGAO': orgao, 'TEMPO': 0, 'DATA ULTIMA PUBLICACAO': nova_data}
+                    novo = {'SERVIÇO': servico, 'ORGAO': orgao, 'TEMPO': 0, 'DATA ULTIMA PUBLICAÇÃO': nova_data}
                     df = pd.concat([df, pd.DataFrame([novo])], ignore_index=True)
                     df = atualizar_tempo(df)
                     salvar_dados(df)
@@ -218,12 +267,12 @@ def render_servicos_a_revisar():
                     orgao_edit = st.text_input("Órgão", value=row['ORGAO'], key="edit_orgao")
                     data_edit = st.date_input(
                         "Data Última Publicação (opcional)",
-                        value=pd.to_datetime(row['DATA ULTIMA PUBLICACAO'], errors='coerce').date() if pd.notna(row['DATA ULTIMA PUBLICACAO']) else None,
+                        value=pd.to_datetime(row['DATA ULTIMA PUBLICAÇÃO'], errors='coerce').date() if pd.notna(row['DATA ULTIMA PUBLICAÇÃO']) else None,
                         key="edit_data"
                     )
                     hora_edit = st.time_input(
                         "Hora Última Publicação (opcional)",
-                        value=pd.to_datetime(row['DATA ULTIMA PUBLICACAO'], errors='coerce').time() if pd.notna(row['DATA ULTIMA PUBLICACAO']) and ' ' in row['DATA ULTIMA PUBLICACAO'] else None,
+                        value=pd.to_datetime(row['DATA ULTIMA PUBLICAÇÃO'], errors='coerce').time() if pd.notna(row['DATA ULTIMA PUBLICAÇÃO']) and ' ' in row['DATA ULTIMA PUBLICAÇÃO'] else None,
                         key="edit_hora"
                     ) if data_edit else None
                     if st.button("Salvar Edição", key="save_button"):
@@ -231,7 +280,7 @@ def render_servicos_a_revisar():
                             nova_data = f"{data_edit.strftime('%d/%m/%Y') if data_edit else ''} {hora_edit.strftime('%H:%M') if hora_edit else ''}".strip() if data_edit and hora_edit else ''
                             df.at[idx, 'SERVIÇO'] = servico_edit
                             df.at[idx, 'ORGAO'] = orgao_edit
-                            df.at[idx, 'DATA ULTIMA PUBLICACAO'] = nova_data
+                            df.at[idx, 'DATA ULTIMA PUBLICAÇÃO'] = nova_data
                             df = atualizar_tempo(df)
                             salvar_dados(df)
                             st.success("Serviço atualizado!")
@@ -254,3 +303,6 @@ def render_servicos_a_revisar():
         figs = generate_servicos_a_revisar_dashboards(df, limite_grafico)
         for fig in figs:
             st.plotly_chart(fig, use_container_width=True)
+
+if __name__ == "__main__":
+    render_servicos_a_revisar()

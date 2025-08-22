@@ -1,6 +1,20 @@
+# python_graphs_CIN/pages/__init__.py
 __all__ = [
-    'geral_amplo', 'informacoes', 'treina_turma', 'treina_cidade', 'produtividade',
-    'ag_info_prefeitura', 'ag_instalacao', 'ag_visita', 'chefes_posto', 'funcionando',
-    'geral_resumo', 'instalados', 'lista_x', 'publicados', 'servicos_a_revisar',
-    'upload_excel', 'visitas_realizadas', 'dashboard_central'
+    'ag_info_prefeitura',
+    'ag_instalacao',
+    'ag_visita',
+    'servicos_a_revisar',
+    'chefes_posto',
+    'funcionando',
+    'geral_amplo',
+    'geral_resumo',
+    'informacoes',
+    'instalados',
+    'lista_x',
+    'produtividade',
+    'publicados',
+    'treina_cidade',
+    'treina_turma',
+    'upload_excel',
+    'visitas_realizadas'
 ]
