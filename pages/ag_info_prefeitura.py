@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from utils.data_utils import EXCEL_FILE, load_excel, process_sheet_data, save_excel, SHEET_CONFIG
-from utils.dashboard_utils import generate_ag_info_prefeitura_dashboard
+import plotly.express as px
+from python_graphs_CIN.utils.data_utils import EXCEL_FILE, load_excel, process_sheet_data, save_excel, SHEET_CONFIG
 
 @st.cache_data
 def load_and_process_ag_info_prefeitura(_file_path=EXCEL_FILE):
@@ -13,24 +13,29 @@ def load_and_process_ag_info_prefeitura(_file_path=EXCEL_FILE):
             st.error("Nenhum dado disponível para a aba 'Ag_info_prefeitura'. Verifique o nome da aba no arquivo Excel.")
             return pd.DataFrame()
         
-        # Verificar colunas esperadas
-        expected_columns = list(SHEET_CONFIG['Ag_info_prefeitura']['columns'].keys())
-        missing_columns = [col for col in expected_columns if col not in raw_df.columns]
-        if missing_columns:
-            for col in missing_columns:
-                col_type = SHEET_CONFIG['Ag_info_prefeitura']['columns'][col].get('type', 'string')
-                if col_type == 'date':
-                    raw_df[col] = pd.NaT
-                elif col_type == 'categorical':
-                    raw_df[col] = ''  # Default to empty string for categorical
-                else:
-                    raw_df[col] = ''
-        
         df = process_sheet_data(raw_df, 'Ag_info_prefeitura')
         return df
     except Exception as e:
         st.error(f"Erro ao processar a aba Ag_info_prefeitura: {str(e)}")
         return pd.DataFrame()
+
+def generate_ag_info_prefeitura_dashboard(df, limite_cidades="Sem Limites"):
+    """Gera gráfico para a aba 'Ag_info_prefeitura'."""
+    if df.empty:
+        return None
+    
+    df_plot = df.head(limite_cidades) if isinstance(limite_cidades, int) else df
+    sit_infra_counts = df_plot['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].value_counts().reset_index()
+    sit_infra_counts.columns = ['Situação', 'Quantidade']
+    fig = px.pie(
+        sit_infra_counts,
+        values='Quantidade',
+        names='Situação',
+        title='Distribuição por Situação da Infra-estrutura',
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig.update_traces(textinfo='percent+label')
+    return fig
 
 def render_ag_info_prefeitura(uploaded_file=None):
     st.markdown("""
@@ -47,11 +52,9 @@ def render_ag_info_prefeitura(uploaded_file=None):
     st.markdown("### Tabela Completa")
     st.dataframe(df, use_container_width=True)
     
-    # Aba de navegação: Dados e Dashboard
     tab1, tab2 = st.tabs(["Dados", "Dashboard"])
     
     with tab1:
-        # Adicionar Novo Registro
         with st.expander("Adicionar Novo Registro"):
             cidade = st.text_input("Cidade", key="new_cidade")
             sit_infra = st.selectbox(
@@ -76,7 +79,6 @@ def render_ag_info_prefeitura(uploaded_file=None):
                 else:
                     st.error("Cidade é obrigatória.")
         
-        # Editar ou Apagar Registro
         with st.expander("Editar ou Apagar Registro"):
             if not df.empty:
                 idx = st.selectbox("Selecione uma linha", df.index, key="edit_idx")
@@ -123,7 +125,6 @@ def render_ag_info_prefeitura(uploaded_file=None):
     
     with tab2:
         st.markdown("### Dashboard de Situação da Infra-estrutura")
-        # Seletor para limitar o número de cidades
         limite_cidades = st.selectbox(
             "Limitar número de cidades no gráfico",
             [2, 5, 10, 15, 20, 50, 100, "Sem Limites"],
@@ -136,3 +137,6 @@ def render_ag_info_prefeitura(uploaded_file=None):
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("Nenhum dado disponível para o gráfico de pizza.")
+
+if __name__ == "__main__":
+    render_ag_info_prefeitura()

@@ -1,3 +1,4 @@
+# pages/produtividade.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -5,8 +6,8 @@ from datetime import datetime
 import calendar
 import numpy as np
 import re
-from utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
-from utils.dashboard_utils import generate_produtividade_dashboard
+from python_graphs_CIN.utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
+from python_graphs_CIN.utils.dashboard_utils import generate_produtividade_dashboard
 
 @st.cache_data
 def load_and_process_produtividade(_file_path=EXCEL_FILE):
