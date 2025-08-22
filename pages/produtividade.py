@@ -6,6 +6,7 @@ import calendar
 import numpy as np
 import re
 from utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
+from utils.dashboard_utils import generate_produtividade_dashboard
 
 @st.cache_data
 def load_and_process_produtividade(_file_path=EXCEL_FILE):
@@ -89,8 +90,8 @@ def render_produtividade(uploaded_file=None):
         st.error("Nenhum dado disponível para a aba Produtividade. Verifique o arquivo Excel.")
         return
     
-    # Aba de navegação
-    tab1, tab2, tab3, tab4 = st.tabs(["Dados", "Análise Individual", "Comparação de Cidades", "Comparação por Datas"])
+    # Aba de navegação com nova aba "Dashboard"
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Dados", "Análise Individual", "Comparação de Cidades", "Comparação por Datas", "Dashboard"])
     
     with tab1:
         st.markdown("### Tabela Completa")
@@ -484,6 +485,13 @@ def render_produtividade(uploaded_file=None):
                 st.warning(warning_message)
         except Exception as e:
             st.error(f"Erro ao processar a comparação por datas: {str(e)}")
+    
+    with tab5:
+        st.markdown("<h3>Dashboard</h3>", unsafe_allow_html=True)
+        
+        figs = generate_produtividade_dashboard(df, months)
+        for fig in figs:
+            st.plotly_chart(fig, use_container_width=True)
 
 if __name__ == "__main__":
     render_produtividade()
