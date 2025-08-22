@@ -6,6 +6,7 @@ import calendar
 import numpy as np
 import re
 from utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
+from utils.dashboard_utils import generate_produtividade_dashboard
 
 @st.cache_data
 def load_and_process_produtividade(_file_path=EXCEL_FILE):
@@ -488,83 +489,9 @@ def render_produtividade(uploaded_file=None):
     with tab5:
         st.markdown("<h3>Dashboard</h3>", unsafe_allow_html=True)
         
-        # Gráfico 1: Cidades que mais e menos produziram (Linha)
-        df['Total Produção'] = df[months].sum(axis=1)
-        valid_df = df[df['Total Produção'] > 0]  # Excluir valores nulos ou zerados
-        if not valid_df.empty:
-            # Selecionar as 2 cidades com maior produção e as 2 com menor produção
-            max_cities = valid_df.nlargest(2, 'Total Produção')['CIDADE'].tolist()
-            min_cities = valid_df.nsmallest(2, 'Total Produção')['CIDADE'].tolist()
-            selected_cities = list(set(max_cities + min_cities))  # Evitar duplicatas
-            
-            compare_df = valid_df[valid_df['CIDADE'].isin(selected_cities)]
-            compare_prod_df = pd.DataFrame()
-            for city in selected_cities:
-                city_data = compare_df[compare_df['CIDADE'] == city][months].transpose().reset_index()
-                city_data.columns = ['Mês', 'Produção']
-                city_data['Cidade'] = city
-                compare_prod_df = pd.concat([compare_prod_df, city_data], ignore_index=True)
-            
-            if not compare_prod_df.empty:
-                fig_line = px.line(
-                    compare_prod_df,
-                    x='Mês',
-                    y='Produção',
-                    color='Cidade',
-                    title='Cidades que Mais e Menos Produziram (Total)',
-                    markers=True,
-                    text='Produção',
-                    color_discrete_sequence=px.colors.qualitative.Plotly
-                )
-                fig_line.update_traces(mode='lines+markers+text', textposition='top center')
-                fig_line.update_layout(
-                    showlegend=True,
-                    legend_title_text='Cidades',
-                    xaxis_title='Mês',
-                    yaxis_title='Produção',
-                    margin=dict(t=50, b=50, l=50, r=50)
-                )
-                st.plotly_chart(fig_line, use_container_width=True)
-            else:
-                st.warning("Nenhum dado disponível para o gráfico de cidades que mais e menos produziram.")
-        else:
-            st.warning("Nenhum dado válido (produção > 0) para o gráfico de cidades que mais e menos produziram.")
-        
-        # Gráfico 2: Cidades que mais e menos produziram no mês anterior (Coluna)
-        current_month = 'AGOSTO'  # Baseado na data atual (21/08/2025)
-        previous_month = 'JULHO'  # Mês anterior
-        if previous_month in months:
-            month_data = df[['CIDADE', previous_month]].copy()
-            month_data['Produção'] = month_data[previous_month]
-            valid_month_data = month_data[month_data['Produção'] > 0]  # Excluir valores nulos ou zerados
-            
-            if not valid_month_data.empty:
-                max_city = valid_month_data.loc[valid_month_data['Produção'].idxmax(), 'CIDADE']
-                min_city = valid_month_data.loc[valid_month_data['Produção'].idxmin(), 'CIDADE']
-                compare_month_df = valid_month_data[valid_month_data['CIDADE'].isin([max_city, min_city])]
-                
-                fig_bar = px.bar(
-                    compare_month_df,
-                    x='CIDADE',
-                    y='Produção',
-                    title=f'Cidades que Mais e Menos Produziram ({previous_month}/2025)',
-                    color='CIDADE',
-                    text='Produção',
-                    color_discrete_sequence=px.colors.qualitative.Plotly
-                )
-                fig_bar.update_traces(texttemplate='%{text}', textposition='outside')
-                fig_bar.update_layout(
-                    showlegend=True,
-                    legend_title_text='Cidades',
-                    xaxis_title='Cidade',
-                    yaxis_title='Produção',
-                    margin=dict(t=50, b=50, l=50, r=50)
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
-            else:
-                st.warning(f"Nenhum dado válido (produção > 0) para o mês {previous_month}.")
-        else:
-            st.error(f"Coluna {previous_month} não encontrada na aba Produtividade.")
+        figs = generate_produtividade_dashboard(df, months)
+        for fig in figs:
+            st.plotly_chart(fig, use_container_width=True)
 
 if __name__ == "__main__":
     render_produtividade()

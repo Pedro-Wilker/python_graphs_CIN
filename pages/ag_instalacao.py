@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
-import plotly.express as px
+from utils.dashboard_utils import generate_ag_instalacao_dashboards
 from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, PatternFill
@@ -215,114 +215,12 @@ def render_ag_instalacao(uploaded_file=None):
             key="limit_cidades"
         )
         
-        # Filtrar o DataFrame com base no limite
-        df_grafico = df.head(limite_cidades) if limite_cidades != "Sem Limites" else df.copy()
-        
-        # Gráfico 1: SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA
-        st.markdown("#### Distribuição de Cidades por Situação da Infra-estrutura")
-        valid_categories = SHEET_CONFIG['Ag_Instalacao']['columns']['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA']['values'] + ["Não Informada"]
-        df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'] = df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].apply(
-            lambda x: x if x in SHEET_CONFIG['Ag_Instalacao']['columns']['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA']['values'] else "Não Informada"
-        )
-        df_counts_infra = df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].value_counts().reset_index()
-        df_counts_infra.columns = ['Situação', 'Contagem']
-        for category in valid_categories:
-            if category not in df_counts_infra['Situação'].values:
-                df_counts_infra = pd.concat([df_counts_infra, pd.DataFrame({'Situação': [category], 'Contagem': [0]})], ignore_index=True)
-        
-        if not df_counts_infra.empty and df_counts_infra['Contagem'].sum() > 0:
-            fig_infra = px.pie(
-                df_counts_infra,
-                names='Situação',
-                values='Contagem',
-                title='Cidades por Situação da Infra-estrutura para Visita Técnica',
-                height=400,
-                color='Situação',
-                color_discrete_map={
-                    'Sem pendência': '#00CC96',  # Verde
-                    'Com Pendência': '#EF553B',  # Vermelho
-                    'Não Informada': '#636EFA'   # Azul
-                }
-            )
-            fig_infra.update_traces(textinfo='percent+label', textposition='inside', showlegend=True)
-            fig_infra.update_layout(legend_title_text='Situação', margin=dict(t=50, b=50, l=50, r=50))
-            st.plotly_chart(fig_infra, use_container_width=True)
-        else:
-            st.warning("Nenhum dado disponível para o gráfico de situação da infra-estrutura.")
-        
-        # Gráfico 2: PARECER DA VISITA TÉCNICA
-        st.markdown("#### Distribuição de Cidades por Parecer da Visita Técnica")
-        valid_parecer = SHEET_CONFIG['Ag_Instalacao']['columns']['PARECER DA VISITA TÉCNICA']['values'] + ["Não Informado"]
-        df_grafico['PARECER DA VISITA TÉCNICA'] = df_grafico['PARECER DA VISITA TÉCNICA'].apply(
-            lambda x: x if x in SHEET_CONFIG['Ag_Instalacao']['columns']['PARECER DA VISITA TÉCNICA']['values'] else "Não Informado"
-        )
-        df_counts_parecer = df_grafico['PARECER DA VISITA TÉCNICA'].value_counts().reset_index()
-        df_counts_parecer.columns = ['Parecer', 'Contagem']
-        for category in valid_parecer:
-            if category not in df_counts_parecer['Parecer'].values:
-                df_counts_parecer = pd.concat([df_counts_parecer, pd.DataFrame({'Parecer': [category], 'Contagem': [0]})], ignore_index=True)
-        
-        if not df_counts_parecer.empty and df_counts_parecer['Contagem'].sum() > 0:
-            fig_parecer = px.pie(
-                df_counts_parecer,
-                names='Parecer',
-                values='Contagem',
-                title='Cidades por Parecer da Visita Técnica',
-                height=400,
-                color_discrete_sequence=px.colors.qualitative.Plotly
-            )
-            fig_parecer.update_traces(textinfo='percent+label', textposition='inside', showlegend=True)
-            fig_parecer.update_layout(legend_title_text='Parecer', margin=dict(t=50, b=50, l=50, r=50))
-            st.plotly_chart(fig_parecer, use_container_width=True)
-        else:
-            st.warning("Nenhum dado disponível para o gráfico de parecer da visita técnica.")
-        
-        # Gráfico 3: REALIZOU TREINAMENTO?
-        st.markdown("#### Distribuição de Cidades por Realização de Treinamento")
-        df_grafico['REALIZOU TREINAMENTO?'] = df_grafico['REALIZOU TREINAMENTO?'].map({True: 'Sim', False: 'Não'})
-        df_counts_treinamento = df_grafico['REALIZOU TREINAMENTO?'].value_counts().reset_index()
-        df_counts_treinamento.columns = ['Treinamento', 'Contagem']
-        for category in ['Sim', 'Não']:
-            if category not in df_counts_treinamento['Treinamento'].values:
-                df_counts_treinamento = pd.concat([df_counts_treinamento, pd.DataFrame({'Treinamento': [category], 'Contagem': [0]})], ignore_index=True)
-        
-        if not df_counts_treinamento.empty and df_counts_treinamento['Contagem'].sum() > 0:
-            fig_treinamento = px.pie(
-                df_counts_treinamento,
-                names='Treinamento',
-                values='Contagem',
-                title='Cidades por Realização de Treinamento',
-                height=400,
-                color='Treinamento',
-                color_discrete_map={'Sim': '#00CC96', 'Não': '#EF553B'}
-            )
-            fig_treinamento.update_traces(textinfo='percent+label', textposition='inside', showlegend=True)
-            fig_treinamento.update_layout(legend_title_text='Treinamento', margin=dict(t=50, b=50, l=50, r=50))
-            st.plotly_chart(fig_treinamento, use_container_width=True)
-        else:
-            st.warning("Nenhum dado disponível para o gráfico de treinamento.")
+        figs, df_relatorio = generate_ag_instalacao_dashboards(df, limite_cidades)
+        for fig in figs:
+            st.plotly_chart(fig, use_container_width=True)
         
         # Relatório de Datas
         st.markdown("#### Relatório de Datas por Cidade")
-        df_relatorio = df_grafico[['CIDADE', 'DATA DO D.O.', 'DATA DA INSTALAÇÃO', 'DATA DO INÍCIO ATEND.']].copy()
-        df_relatorio['DO para Instalação (Dias)'] = 0
-        df_relatorio['Instalação para Atendimento (Dias)'] = 0
-        df_relatorio['DO para Atendimento (Dias)'] = 0
-        
-        for idx, row in df_relatorio.iterrows():
-            try:
-                data_do = pd.to_datetime(row['DATA DO D.O.'], format='%d/%m/%Y', errors='coerce')
-                data_instalacao = pd.to_datetime(row['DATA DA INSTALAÇÃO'], format='%d/%m/%Y', errors='coerce')
-                data_inicio_atend = pd.to_datetime(row['DATA DO INÍCIO ATEND.'], format='%d/%m/%Y', errors='coerce')
-                
-                if pd.notna(data_do) and pd.notna(data_instalacao):
-                    df_relatorio.at[idx, 'DO para Instalação (Dias)'] = (data_instalacao - data_do).days
-                if pd.notna(data_instalacao) and pd.notna(data_inicio_atend):
-                    df_relatorio.at[idx, 'Instalação para Atendimento (Dias)'] = (data_inicio_atend - data_instalacao).days
-                if pd.notna(data_do) and pd.notna(data_inicio_atend):
-                    df_relatorio.at[idx, 'DO para Atendimento (Dias)'] = (data_inicio_atend - data_do).days
-            except Exception as e:
-                st.warning(f"Erro ao calcular tempos para a cidade {row['CIDADE']}: {str(e)}")
         
         # Estilizar o DataFrame
         def style_dataframe(df):

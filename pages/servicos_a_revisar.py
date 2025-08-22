@@ -9,6 +9,7 @@ from openpyxl.styles import Font, PatternFill
 from openpyxl.utils.dataframe import dataframe_to_rows
 import plotly.express as px
 import plotly.graph_objects as go
+from utils.dashboard_utils import generate_servicos_a_revisar_dashboards
 
 ARQUIVO = os.path.join(os.path.dirname(__file__), '..', 'revisarservicos.txt')
 
@@ -250,67 +251,6 @@ def render_servicos_a_revisar():
         st.markdown("### Dashboard de Serviços a Revisar")
         servico_selecionado = st.selectbox("Selecione um Serviço (opcional)", ["Nenhum"] + df['SERVIÇO'].tolist(), key="servico_select")
         limite_grafico = st.selectbox("Limitar número de serviços nos gráficos", [2, 5, 10, 15, 20, 50, 100, "Sem Limites"], index=7, key="limit_graph")
-        df_grafico = df.head(limite_grafico) if limite_grafico != "Sem Limites" else df
-        df_grafico['TEMPO'] = pd.to_numeric(df_grafico['TEMPO'], errors='coerce').fillna(0).astype(int)
-        if not df_grafico.empty:
-            df_valid = df_grafico[df_grafico['TEMPO'] > 0]
-            if not df_valid.empty:
-                df_max_min = df_valid.loc[[df_valid['TEMPO'].idxmax(), df_valid['TEMPO'].idxmin()]]
-            else:
-                df_max_min = df_grafico.head(2)
-                st.warning("Nenhum serviço com TEMPO maior que 0. Mostrando os primeiros registros disponíveis.")
-            if servico_selecionado != "Nenhum":
-                if servico_selecionado not in df_max_min['SERVIÇO'].values:
-                    df_servico = df_grafico[df_grafico['SERVIÇO'] == servico_selecionado]
-                    if not df_servico.empty:
-                        df_max_min = pd.concat([df_max_min, df_servico], ignore_index=True)
-            df_max_min = df_max_min.reset_index()
-            df_max_min['ÍNDICE'] = df_max_min.index + 1
-            fig_max_min = px.line(
-                df_max_min,
-                x='ÍNDICE',
-                y='TEMPO',
-                color='SERVIÇO',
-                title='Serviços com Maior e Menor Tempo desde Última Publicação' + (f' (Comparado com {servico_selecionado})' if servico_selecionado != "Nenhum" else ''),
-                labels={'ÍNDICE': 'Serviço', 'TEMPO': 'Dias'},
-                height=400,
-                markers=True,
-                text='TEMPO'
-            )
-            fig_max_min.update_traces(
-                line=dict(width=2),
-                marker=dict(size=10),
-                textposition='top center',
-                hovertemplate='Serviço: %{customdata}<br>Dias: %{y}<extra></extra>',
-                customdata=df_max_min['SERVIÇO']
-            )
-            fig_max_min.update_xaxes(tickvals=df_max_min['ÍNDICE'], ticktext=df_max_min['ÍNDICE'])
-            st.plotly_chart(fig_max_min, use_container_width=True)
-        else:
-            st.warning("Nenhum dado disponível para o gráfico de maior e menor tempo.")
-        df_acima_120 = df_grafico[df_grafico['TEMPO'] > 120]
-        if not df_acima_120.empty:
-            df_acima_120 = df_acima_120.reset_index()
-            df_acima_120['ÍNDICE'] = df_acima_120.index + 1
-            fig_acima_120 = px.line(
-                df_acima_120.sort_values('TEMPO', ascending=False),
-                x='ÍNDICE',
-                y='TEMPO',
-                color='SERVIÇO',
-                title='Serviços com Mais de 120 Dias desde Última Publicação',
-                labels={'ÍNDICE': 'Serviço', 'TEMPO': 'Dias'},
-                height=400,
-                markers=True,
-                text='TEMPO'
-            )
-            fig_acima_120.update_traces(
-                line=dict(width=2),
-                marker=dict(size=10),
-                textposition='top center',
-                hovertemplate='Serviço: %{customdata}<br>Dias: %{y}<extra></extra>',
-                customdata=df_acima_120['SERVIÇO']
-            )
-            fig_acima_120.update_xaxes(tickvals=df_acima_120['ÍNDICE'], ticktext=df_acima_120['ÍNDICE'])
-            st.plotly_chart(fig_acima_120, use_container_width=True)
-        else:
-            st.warning("Nenhum serviço com mais de 120 dias desde a última publicação.")
+        figs = generate_servicos_a_revisar_dashboards(df, limite_grafico)
+        for fig in figs:
+            st.plotly_chart(fig, use_container_width=True)

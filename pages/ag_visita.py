@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from utils.data_utils import load_excel, process_sheet_data, save_excel, SHEET_CONFIG, EXCEL_FILE
-import plotly.express as px
+from utils.dashboard_utils import generate_ag_visita_dashboards
 
 @st.cache_data
 def load_and_process_ag_visita(_file_path=EXCEL_FILE):
@@ -166,64 +166,6 @@ def render_ag_visita(uploaded_file=None):
             key="limit_cidades"
         )
         
-        # Filtrar o DataFrame com base no limite
-        df_grafico = df.head(limite_cidades) if limite_cidades != "Sem Limites" else df.copy()
-        
-        # Gráfico 1: SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA
-        st.markdown("#### Distribuição de Cidades por Situação da Infra-estrutura")
-        valid_categories = ["Sem pendência", "Com Pendência", "Não Informada"]
-        df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'] = df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].apply(
-            lambda x: x if x in valid_categories else "Não Informada"
-        )
-        df_counts_infra = df_grafico['SIT. DA INFRA-ESTRUTURA P/VISITA TÉCNICA'].value_counts().reset_index()
-        df_counts_infra.columns = ['Situação', 'Contagem']
-        for category in valid_categories:
-            if category not in df_counts_infra['Situação'].values:
-                df_counts_infra = pd.concat([df_counts_infra, pd.DataFrame({'Situação': [category], 'Contagem': [0]})], ignore_index=True)
-        
-        if not df_counts_infra.empty and df_counts_infra['Contagem'].sum() > 0:
-            fig_infra = px.pie(
-                df_counts_infra,
-                names='Situação',
-                values='Contagem',
-                title='Cidades por Situação da Infra-estrutura para Visita Técnica',
-                height=400,
-                color='Situação',
-                color_discrete_map={
-                    'Sem pendência': '#00CC96',  # Verde
-                    'Com Pendência': '#EF553B',  # Vermelho
-                    'Não Informada': '#636EFA'   # Azul
-                }
-            )
-            fig_infra.update_traces(textinfo='percent+label', textposition='inside', showlegend=True)
-            fig_infra.update_layout(legend_title_text='Situação', margin=dict(t=50, b=50, l=50, r=50))
-            st.plotly_chart(fig_infra, use_container_width=True)
-        else:
-            st.warning("Nenhum dado disponível para o gráfico de situação da infra-estrutura.")
-        
-        # Gráfico 2: PARECER DA VISITA TÉCNICA
-        st.markdown("#### Distribuição de Cidades por Parecer da Visita Técnica")
-        valid_parecer = SHEET_CONFIG['Ag. Visita']['columns']['PARECER DA VISITA TÉCNICA']['values'] + ["Não Informado"]
-        df_grafico['PARECER DA VISITA TÉCNICA'] = df_grafico['PARECER DA VISITA TÉCNICA'].apply(
-            lambda x: x if x in SHEET_CONFIG['Ag. Visita']['columns']['PARECER DA VISITA TÉCNICA']['values'] else "Não Informado"
-        )
-        df_counts_parecer = df_grafico['PARECER DA VISITA TÉCNICA'].value_counts().reset_index()
-        df_counts_parecer.columns = ['Parecer', 'Contagem']
-        for category in valid_parecer:
-            if category not in df_counts_parecer['Parecer'].values:
-                df_counts_parecer = pd.concat([df_counts_parecer, pd.DataFrame({'Parecer': [category], 'Contagem': [0]})], ignore_index=True)
-        
-        if not df_counts_parecer.empty and df_counts_parecer['Contagem'].sum() > 0:
-            fig_parecer = px.pie(
-                df_counts_parecer,
-                names='Parecer',
-                values='Contagem',
-                title='Cidades por Parecer da Visita Técnica',
-                height=400,
-                color_discrete_sequence=px.colors.qualitative.Plotly
-            )
-            fig_parecer.update_traces(textinfo='percent+label', textposition='inside', showlegend=True)
-            fig_parecer.update_layout(legend_title_text='Parecer', margin=dict(t=50, b=50, l=50, r=50))
-            st.plotly_chart(fig_parecer, use_container_width=True)
-        else:
-            st.warning("Nenhum dado disponível para o gráfico de parecer da visita técnica.")
+        figs = generate_ag_visita_dashboards(df, limite_cidades)
+        for fig in figs:
+            st.plotly_chart(fig, use_container_width=True)
