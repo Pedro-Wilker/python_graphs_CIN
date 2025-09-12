@@ -47,7 +47,6 @@ def load_and_process_informacoes(_retry_count=0, _max_retries=2):
 
 def generate_whatsapp_link(phone_number):
     if pd.notna(phone_number) and str(phone_number).strip():
-        # Remove caracteres não numéricos e adiciona o código do país (ex.: +55 para Brasil)
         phone = re.sub(r'[^\d]', '', str(phone_number))
         if phone and len(phone) >= 10:
             return f"https://wa.me/55{phone}" if phone.startswith('55') else f"https://wa.me/55{phone}"
